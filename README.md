@@ -6,7 +6,7 @@ Enter your gear and abilities, and it tells you which of the six attributes actu
 *your* build, whether a piece of gear is an upgrade, and which abilities fit the stats you
 already have.
 
-**→ [Open the planner](https://carl-prewitt.com/soulbound/)**
+**→ [Open the planner](https://soulbound.carl-prewitt.com/)**
 
 ![The planner with a build loaded](screenshots/planner-desktop.png)
 

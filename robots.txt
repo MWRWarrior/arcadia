@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://carl-prewitt.com/soulbound/sitemap.xml
+Sitemap: https://soulbound.carl-prewitt.com/sitemap.xml
