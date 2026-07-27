@@ -133,6 +133,8 @@
   .badge{font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:4px}
   .badge.eq{background:#1b2c4a;color:#8fb6ff} .badge.sug{background:#1d3a18;color:var(--good)}
 
+  .empty{color:var(--dim);font-size:12.5px;line-height:1.55;padding:2px 0}
+  .empty b{color:var(--ink)}
   .note{font-size:12.5px;color:var(--dim);background:#0f1626;border:1px solid var(--edge);
     border-left:3px solid var(--acc);border-radius:7px;padding:9px 11px;margin-top:9px}
   .note.warn{border-left-color:var(--warn)} .note.good{border-left-color:var(--good)}
@@ -196,7 +198,7 @@
   <div class="toolbar">
     <button class="btn primary" id="shareBtn">🔗 Copy share link</button>
     <button class="btn" id="exampleBtn">Load example</button>
-    <button class="btn" id="clearBtn">Clear gear</button>
+    <button class="btn" id="clearBtn" title="Clears your gear, abilities and saved data">Reset</button>
     <button class="btn" id="exportBtn">Export</button>
     <button class="btn" id="importBtn">Import</button>
     <input type="file" id="importFile" accept="application/json" style="display:none">
@@ -648,6 +650,13 @@ function renderPriority(){
     note.innerHTML=`<b>Start here:</b> pick the abilities you actually run, above. Every ability is scaled by
       exactly 3 of the 5 offensive attributes, so your loadout decides which stats are worth chasing —
       and <b>Vitality scales none of them</b>.`; return; }
+  if(!hasPrimaries()){
+    host.innerHTML=`<div class="empty">Your abilities are set. Now add gear below — the ranking
+      needs your actual attribute values to tell you which stats are worth chasing.</div>`;
+    note.innerHTML=`Attributes are ranked by how many of <b>your</b> abilities use them, and how
+      much headroom each one still has.`;
+    return;
+  }
   const ranked=AKEYS.map(k=>({k,cov:cov[k],v:t[k]})).sort((a,b)=>b.cov-a.cov||a.v-b.v);
   host.innerHTML=ranked.map((r,i)=>{
     const A=ATTRS[r.k];
@@ -731,11 +740,28 @@ function renderAdvice(){
   host.innerHTML=tips.length?tips.map(x=>`<li><b>${x.t}</b><span class="why">${x.w}</span></li>`).join("")
     :`<li>No obvious inefficiencies — your gear and abilities line up.</li>`;
 }
+function hasPrimaries(){
+  return SLOTS.some(sl=>S.gear[sl] && (S.gear[sl].rolls||[]).some(r=>r.p&&AKEYS.includes(r.s)&&(+r.v||0)>0));
+}
 function renderAbilRank(){
   const t=attrTotals(),eq=S.loadout.filter(Boolean);
+  // With no gear every attribute sits at the base of 1, so all abilities tie and any
+  // ranking would be an artefact of sort order rather than a recommendation.
+  if(!hasPrimaries()){
+    document.getElementById("abilrank").innerHTML=
+      `<div class="empty">Add gear with <b>primary</b> attribute rolls and this ranks all
+       ${ABILITIES.length} abilities by how much of your stat spread each one can actually use.
+       <br><br>Right now every attribute is at its base of 1, so they'd all tie — there's nothing
+       to rank yet.</div>`;
+    document.getElementById("abilNote").innerHTML=
+      `Each ability is scaled by exactly 3 of the 5 offensive attributes, so which abilities suit
+       you depends entirely on the gear you're wearing.`;
+    return;
+  }
   const rows=ABILITIES.map(a=>({a,s:synergy(a,t)})).sort((x,y)=>y.s-x.s);
   const mx=rows[0]?rows[0].s:1;
-  const sug=rows.filter(r=>!eq.includes(r.a.id)).slice(0,2).map(r=>r.a.id);
+  const allTied=rows.length&&rows[0].s===rows[rows.length-1].s;
+  const sug=allTied?[]:rows.filter(r=>!eq.includes(r.a.id)).slice(0,2).map(r=>r.a.id);
   document.getElementById("abilrank").innerHTML=rows.map((r,i)=>{
     const isEq=eq.includes(r.a.id),isS=!isEq&&sug.includes(r.a.id);
     return `<div class="arow ${isEq?'eq':''} ${isS?'sug':''}"><span class="rank">${i+1}</span>
@@ -798,7 +824,7 @@ function renderDisc(){
   document.getElementById("disc").innerHTML=
     `<b>Soulbound Build Planner</b> — a free fan-made tool. Not affiliated with, endorsed by, or associated with SpiderWare or Soulbound: Online. `+
     `All game names and trademarks belong to their respective owners. Values are community-maintained approximations that can change with game updates — `+
-    `always trust your in-game stat panel over this tool. Builds are stored only in your own browser; share links encode the build in the URL itself.`+
+    `always trust your in-game stat panel over this tool. Builds are saved in your own browser as you edit (never uploaded) — press <b>Reset</b> to clear them; share links encode the build in the URL itself.`+
     `<br><br>Open source — <a href="https://github.com/rages4calm/soulbound-build-planner" rel="noopener">view or contribute on GitHub</a>. Spotted a wrong number, or an item that's missing? Open an issue.`;
 }
 
@@ -839,7 +865,12 @@ function clearSlot(sl){ S.gear[sl]=null; save(); }
 
 document.getElementById("shareBtn").onclick=shareLink;
 document.getElementById("exampleBtn").onclick=()=>{ S=normalise(clone(EXAMPLE)); save(); };
-document.getElementById("clearBtn").onclick=()=>{ S.gear=blankGear(); save(); };
+document.getElementById("clearBtn").onclick=()=>{
+  S={loadout:["","","",""],gear:blankGear(),compare:{slot:"Chest",item:"",rolls:[]}};
+  try{ localStorage.removeItem(LS); }catch(e){}
+  history.replaceState(null,"",location.pathname);   // drop any shared-build hash
+  render(); toast("Reset — nothing saved in this browser");
+};
 document.getElementById("exportBtn").onclick=()=>{ const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="soulbound-build.json"; a.click(); };
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
