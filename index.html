@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Soulbound Build Planner &amp; Stat Optimizer | Soulbound: Online</title>
+<meta name="description" content="Free build planner for Soulbound: Online. Find which of the six attributes — Power, Precision, Will, Ferocity, Vitality, Focus — actually scale your abilities, compare gear side by side, and share builds by link."/>
+<link rel="canonical" href="https://carl-prewitt.com/soulbound/"/>
+<meta name="robots" content="index,follow,max-image-preview:large"/>
+<meta name="theme-color" content="#0b0e14"/>
+<meta name="color-scheme" content="dark"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Soulbound Build Planner"/>
+<meta property="og:title" content="Soulbound Build Planner &amp; Stat Optimizer"/>
+<meta property="og:description" content="Work out which attributes actually scale your Soulbound abilities, compare gear, and share builds by link. Free, no account, runs in your browser."/>
+<meta property="og:url" content="https://carl-prewitt.com/soulbound/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Soulbound Build Planner &amp; Stat Optimizer"/>
+<meta name="twitter:description" content="Which attributes actually scale your Soulbound abilities? Compare gear, plan builds, share by link."/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%230b0e14&#39;/%3E%3Cpath d=&#39;M16 5l9 5v8c0 5-4 8-9 9-5-1-9-4-9-9v-8z&#39; fill=&#39;none&#39; stroke=&#39;%237b5cff&#39; stroke-width=&#39;2.5&#39;/%3E%3C/svg%3E"/>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebApplication","name":"Soulbound Build Planner",
+  "applicationCategory":"GameApplication","operatingSystem":"Any (web browser)",
+  "description":"Build planner and stat optimizer for the MMO Soulbound: Online. Calculates attribute totals, ranks which attributes scale your equipped abilities, compares gear, and shares builds by URL.",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "isAccessibleForFree":true,
+  "browserRequirements":"Requires JavaScript",
+  "about":{"@type":"VideoGame","name":"Soulbound: Online","publisher":{"@type":"Organization","name":"SpiderWare"}}},
+ {"@type":"FAQPage","mainEntity":[
+  {"@type":"Question","name":"Which attributes scale my abilities in Soulbound?",
+   "acceptedAnswer":{"@type":"Answer","text":"Every ability is scaled by exactly three of the five offensive attributes — Power, Precision, Will, Ferocity and Focus. Vitality scales no ability at all; it only provides health, health regeneration and elemental resistances."}},
+  {"@type":"Question","name":"Does Vitality increase damage in Soulbound?",
+   "acceptedAnswer":{"@type":"Answer","text":"No. Vitality appears in no ability’s scaling, so it adds no damage. It is still unavoidable on armour, which always rolls Vitality as its largest primary stat, so high health mostly signals a high item level rather than a damage trade-off."}},
+  {"@type":"Question","name":"What does item level mean in Soulbound?",
+   "acceptedAnswer":{"@type":"Answer","text":"An item’s level equals the sum of its primary attribute points. Item level is therefore a fixed attribute budget, and two items of the same level differ only in how that budget is split between Vitality and offensive attributes."}},
+  {"@type":"Question","name":"Do Soulbound stats have diminishing returns?",
+   "acceptedAnswer":{"@type":"Answer","text":"Yes, for percentage stats. They follow a saturating curve, so the first point of an attribute is worth several times the thirty-fourth. Flat stats such as maximum health and health regeneration stay linear and never saturate."}}]}
+]}
+</script>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121722; --panel2:#171d2b; --edge:#232c3f;
+    --ink:#c8d3e6; --dim:#97a3bd; --faint:#7b88a3;
+    /* decorative only, never text: */ --hair:#4d5a75;
+    --acc:#7b5cff; --acc2:#00d0c0; --good:#37d67a; --warn:#ffb84d; --bad:#ff5c6c; --hl:#e8c87e;
+    --off:#ff8a5c; --def:#5aa9ff; --hyb:#b98cff;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  :root{ --ease:cubic-bezier(.22,1,.36,1); --dur:180ms;
+         --z-sticky:10; --z-toast:40; }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+  /* every interactive element gets a visible, consistent focus ring */
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,
+  summary:focus-visible,details:focus-visible{
+    outline:2px solid var(--acc2); outline-offset:2px; border-radius:6px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  body{margin:0;background:radial-gradient(1100px 520px at 82% -12%,#17213c 0%,transparent 62%),var(--bg);
+    color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+  h1,h2{margin:0;font-weight:650;letter-spacing:.3px}
+  .wrap{max-width:1340px;margin:0 auto;padding:18px 18px 70px}
+  body{overflow-x:hidden}
+  .card,.slot,.arow,.dl,.pri{min-width:0}
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  header h1{font-size:20px}
+  .tagline{color:var(--dim);font-size:12.5px;margin:3px 0 14px;max-width:800px}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:15px;align-items:start}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--edge);
+    border-radius:12px;padding:13px 14px;margin-bottom:14px;box-shadow:0 10px 30px -22px #000}
+  .card>h2{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--dim);
+    margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .card>h2 .hint{font-size:10.5px;letter-spacing:.3px;text-transform:none;color:var(--faint);font-weight:400}
+
+  .attrs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .attr{background:#0e1320;border:1px solid var(--edge);border-radius:9px;padding:8px 9px;position:relative}
+  .attr .n{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+  .attr .val{font-family:var(--mono);font-size:21px;font-weight:600}
+  .attr .cov{position:absolute;top:7px;right:8px;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:4px}
+  .attr .bar{height:3px;border-radius:2px;background:#1c2333;margin-top:6px;overflow:hidden}
+  .attr .bar>i{display:block;height:100%}
+  .attr.used{border-color:#3b3170} .attr.unused{opacity:.7;border-style:dashed}
+  .cov.c3,.cov.c4{background:#173a24;color:var(--good)} .cov.c2{background:#2a2f1a;color:var(--hl)}
+  .cov.c1{background:#2b2419;color:var(--warn)} .cov.c0{background:#1a2130;color:var(--def)}
+
+  .slot{border:1px solid var(--edge);border-radius:9px;margin-bottom:7px;overflow:hidden}
+  .slot summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;gap:9px;align-items:center;background:#0e1320}
+  .slot summary::-webkit-details-marker{display:none}
+  .slot summary{transition:background var(--dur) var(--ease)}
+  .slot summary:hover{background:#111728}
+  .slotname{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--faint);min-width:52px}
+  .itemname{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .itemname.empty{color:var(--faint);font-weight:400;font-style:italic}
+  .ilvl{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .eff{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+  .eff.hi{background:#173a24;color:var(--good)} .eff.mid{background:#2a2f1a;color:var(--hl)}
+  .eff.lo{background:#301a20;color:var(--bad)}
+  .slot .body{padding:9px 11px 11px;border-top:1px solid var(--edge);background:#10141f}
+  .rollrow{display:flex;gap:5px;align-items:center;margin:4px 0}
+  .rollrow select,.rollrow input,.itemname-edit,select.pick,input.lv{background:#0b0f18;border:1px solid var(--edge);
+    color:var(--ink);border-radius:6px;padding:5px 7px;font-family:var(--mono);font-size:12px}
+  .rollrow input[type=number]{width:72px} .rollrow select{flex:1;min-width:0}
+  .kind{font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;min-width:58px}
+  .tagsel{background:#0b0f18;border:1px solid var(--edge);color:var(--def);border-radius:6px;
+    padding:4px 5px;font-family:var(--mono);font-size:10.5px;max-width:120px}
+  .btn,.addbtn{background:#141a28;border:1px solid var(--edge);color:var(--dim);border-radius:6px;
+    padding:5px 9px;cursor:pointer;font-size:12px;font-family:inherit}
+  .btn,.addbtn{transition:filter var(--dur) var(--ease),color var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+  .btn:hover,.addbtn:hover{filter:brightness(1.3);color:var(--ink)}
+  .btn:active,.addbtn:active{filter:brightness(.92)}
+  .btn.primary{background:#1b2c4a;color:#a8c8ff;border-color:#2f4b78}
+  .addbtn{background:#12203a;color:#8fb6ff;border-color:#26406b;margin:6px 5px 0 0}
+  .rollrow button{background:#241722;color:#e08596;border-color:#3a2330;padding:4px 8px;border-radius:6px;cursor:pointer;border:1px solid #3a2330}
+  .itemname-edit{width:100%;font-family:var(--sans)}
+  .nameRow{display:flex;gap:6px;margin-bottom:7px} .nameRow input.lv{width:78px}
+  .toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px;align-items:center}
+  .lo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:7px}
+  select.pick{width:100%}
+
+  .arow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;border:1px solid transparent}
+  .arow+.arow{margin-top:3px}
+  .arow.eq{background:#111a2b;border-color:#26406b} .arow.sug{background:#12210f;border-color:#2f5a2a}
+  .arow .rank{font-family:var(--mono);font-size:10px;color:var(--faint);min-width:18px}
+  .arow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+  .arow .ty{font-family:var(--mono);font-size:9.5px;padding:1px 5px;border-radius:4px;background:#182031;color:var(--dim)}
+  .arow .sc{font-family:var(--mono);font-size:12.5px;min-width:34px;text-align:right}
+  .arow .by{font-family:var(--mono);font-size:9.5px;color:var(--faint);white-space:nowrap;flex:0 0 auto}
+  .badge{font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:4px}
+  .badge.eq{background:#1b2c4a;color:#8fb6ff} .badge.sug{background:#1d3a18;color:var(--good)}
+
+  .note{font-size:12.5px;color:var(--dim);background:#0f1626;border:1px solid var(--edge);
+    border-left:3px solid var(--acc);border-radius:7px;padding:9px 11px;margin-top:9px}
+  .note.warn{border-left-color:var(--warn)} .note.good{border-left-color:var(--good)}
+  .note.info{border-left-color:var(--def)} .note b{color:var(--ink)}
+  ol.advice{margin:0;padding-left:18px} ol.advice li{margin:7px 0;font-size:13px;color:var(--dim)}
+  ol.advice li b{color:var(--ink)} ol.advice li .why{display:block;font-size:11.5px;color:var(--faint);margin-top:1px}
+  .pri{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #141a27}
+  .pri .p{font-family:var(--mono);font-size:10px;color:var(--faint);min-width:16px}
+  .pri .nm{flex:1;font-weight:600}
+  .pri .tag{font-size:9.5px;font-family:var(--mono);padding:1px 6px;border-radius:4px}
+  .pri .v{font-family:var(--mono);font-size:13px;min-width:30px;text-align:right}
+  .t-off{background:#2e1d16;color:var(--off)} .t-def{background:#15263a;color:var(--def)}
+  .t-hyb{background:#241a38;color:var(--hyb)}
+  .fx{font-size:11.5px;color:var(--faint);margin-top:2px} .fx b{color:var(--dim);font-family:var(--mono)}
+  .lvbadge{font-family:var(--mono);font-size:11px;color:var(--hl);background:#241f10;border:1px solid #4a3d1c;border-radius:6px;padding:5px 8px;white-space:nowrap}
+  .cmpbar{display:flex;gap:6px;margin-bottom:8px} .cmpbar select{max-width:120px}
+  .dl{display:grid;grid-template-columns:1fr auto auto auto;gap:2px 10px;font-size:12.5px;margin-top:10px}
+  .dl .h{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--faint);border-bottom:1px solid var(--edge);padding-bottom:3px}
+  .dl .k{color:var(--dim)} .dl .v{font-family:var(--mono);text-align:right}
+  .up{color:var(--good)} .dn{color:var(--bad)} .eqv{color:var(--faint)}
+  .verdict{margin-top:11px;padding:10px 12px;border-radius:8px;font-size:13px;border:1px solid}
+  .verdict.good{background:#12210f;border-color:#2f5a2a;color:#b6e5a8}
+  .verdict.bad{background:#20121a;border-color:#5d3a3f;color:#f0a9b3}
+  .verdict.mixed{background:#201c10;border-color:#5a4a24;color:#e8d3a0}
+  .verdict b{color:#fff}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1d3a18;color:var(--good);
+    border:1px solid #2f5a2a;border-radius:8px;padding:9px 16px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity var(--dur) var(--ease);z-index:var(--z-toast)}
+  .toast.on{opacity:1}
+  .disc a{color:var(--acc2);text-underline-offset:2px}
+  .disc{color:var(--faint);font-size:11px;margin-top:26px;border-top:1px solid var(--edge);padding-top:14px;line-height:1.7}
+  code{font-family:var(--mono);background:#0d1220;padding:1px 5px;border-radius:4px;color:#b9c6e0;font-size:11.5px}
+
+  /* ---- responsive: must come last so it wins the cascade ---- */
+  @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+  @media (max-width:620px){
+    .wrap{padding:14px 12px 60px}
+    .attrs{grid-template-columns:repeat(2,1fr)}
+    .lo{grid-template-columns:1fr}
+    .toolbar{gap:6px} .toolbar .btn{flex:1 1 calc(50% - 3px);min-height:40px}
+    .rollrow{flex-wrap:wrap}
+    .rollrow select{flex:1 1 100%;min-width:0}
+    .rollrow input[type=number]{width:84px}
+    .tagsel{max-width:none;flex:1 1 auto}
+    .arow{flex-wrap:wrap;gap:6px} .arow .nm{flex:1 1 100%} .arow .by{margin-left:auto}
+    .dl{gap:2px 6px;font-size:12px}
+    .cmpbar{flex-wrap:wrap} .cmpbar select{max-width:none;flex:1 1 100%}
+    .slot summary{padding:10px;gap:7px} .slotname{min-width:0}
+    .pri{flex-wrap:wrap} .pri .nm{flex:1 1 auto}
+    .card{padding:12px}
+  }
+  @media (max-width:380px){ .attrs{grid-template-columns:1fr 1fr} .toolbar .btn{flex:1 1 100%} }
+</style>
+</head>
+<body>
+<a href="#main" class="sr-only">Skip to planner</a>
+<div class="wrap">
+  <header role="banner"><h1>Soulbound Build Planner</h1><span style="color:var(--faint);font-family:var(--mono);font-size:11.5px">stat optimizer &amp; ability matcher</span></header>
+  <div class="tagline">Enter your gear, pick your abilities, and see which attributes actually scale your build &mdash; plus which abilities best fit the stats you already have. A fan project for <b>Soulbound: Online</b>.</div>
+
+  <div class="toolbar">
+    <button class="btn primary" id="shareBtn">🔗 Copy share link</button>
+    <button class="btn" id="exampleBtn">Load example</button>
+    <button class="btn" id="clearBtn">Clear gear</button>
+    <button class="btn" id="exportBtn">Export</button>
+    <button class="btn" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+
+  <main id="main" class="grid">
+    <div>
+      <div class="card">
+        <h2>Your abilities <span class="hint">pick up to 4</span></h2>
+        <div class="lo" id="loadout"></div>
+      </div>
+      <div class="card">
+        <h2>Gear <span class="hint">copy the rolls from your item tooltips</span></h2>
+        <div id="gear"></div>
+        <div class="note info" id="itemRules"></div>
+      </div>
+      <div class="card">
+        <h2>Compare an item <span class="hint">should you swap it in?</span></h2>
+        <div class="cmpbar">
+          <select class="pick" id="cmpSlot" onchange="setCmpSlot(this.value)"></select>
+          <input class="itemname-edit" id="cmpName" placeholder="Candidate item name"
+                 aria-label="Candidate item name" oninput="setCmpName(this.value)">
+        </div>
+        <div class="cmpbar">
+          <select class="pick" id="cmpLib" aria-label="Load a documented item"
+                  onchange="loadFromLib(this.value)"></select>
+        </div>
+        <div id="cmpRolls"></div>
+        <button class="addbtn" onclick="addCmpRoll(1)">+ primary</button>
+        <button class="addbtn" onclick="addCmpRoll(0)">+ secondary</button>
+        <button class="addbtn" onclick="clearCmp()">clear</button>
+        <div id="cmpOut"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Attributes <span class="hint">1 base + your gear's primary rolls</span></h2>
+        <div class="attrs" id="attrs"></div>
+        <div class="note" id="hpNote"></div>
+      </div>
+      <div class="card">
+        <h2>Stat priority for this build <span class="hint">the optimizer's ranking</span></h2>
+        <div id="priority"></div>
+        <div class="note good" id="priNote"></div>
+      </div>
+      <div class="card">
+        <h2>What to change <span class="hint">actionable</span></h2>
+        <ol class="advice" id="advice"></ol>
+      </div>
+      <div class="card">
+        <h2>Ability-scoped gear <span class="hint">who your tagged rolls actually boost</span></h2>
+        <div id="tagged"></div>
+      </div>
+      <div class="card">
+        <h2>Ability match <span class="hint">how well each ability fits your stats</span></h2>
+        <div id="abilrank"></div>
+        <div class="note" id="abilNote"></div>
+      </div>
+    </div>
+  </main>
+  <footer class="disc" id="disc"></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ═══════════ GAME MODEL ═══════════
+   Every ability is scaled by exactly 3 of the 5 offensive attributes.
+   Vitality scales no ability — it is survivability, and armour always rolls it.
+   ═══════════════════════════════════ */
+
+/* Percentage stats follow a saturating curve  y = a*p/(p+b)  (p = points above the
+   base of 1): a is the ceiling, b the points needed to reach half of it. Flat stats
+   (health, regen) are strictly linear. Curves marked `fit` are measured; the rest
+   share the same shape but their constants aren't pinned down yet. */
+const ATTRS = {
+  power:     {name:"Power",     role:"off", gives:[
+    {s:"Raw damage", d:"direct multiplier in the damage formula"}]},
+  precision: {name:"Precision", role:"off", gives:[
+    {s:"Crit Chance", d:"saturating"},
+    {s:"Attack Speed", a:14.7, b:1.9, unit:"%", fit:1},
+    {s:"Projectile Speed", a:0.25, b:17.6, fit:1}]},
+  will:      {name:"Will",      role:"hyb", gives:[
+    {s:"Cooldown Reduction", d:"saturating"},
+    {s:"Stun Resistance", a:30, b:25, unit:"%", fit:1}]},
+  ferocity:  {name:"Ferocity",  role:"off", gives:[
+    {s:"Crit Damage", d:"saturating"},
+    {s:"Heavy Hit Damage", d:"saturating"},
+    {s:"Dot Potency", d:"saturating"}]},
+  vitality:  {name:"Vitality",  role:"def", gives:[
+    {s:"Max Health", lin:1.0, fit:1},
+    {s:"Health Regen", lin:0.01, fit:1},
+    {s:"All 6 Resistances", a:12, b:18, unit:"%", fit:1}]},
+  focus:     {name:"Focus",     role:"off", gives:[
+    {s:"Heavy Hit Chance", d:"saturating"},
+    {s:"AoE Radius", d:"saturating"},
+    {s:"Status Duration", d:"saturating"}]},
+};
+const curveVal    =(g,p)=> g.lin!=null ? g.lin*p : g.a*p/(p+g.b);
+const curveMargin =(g,p)=> g.lin!=null ? g.lin   : g.a*g.b/((p+g.b)**2);
+// How saturated an attribute is: 0 = untapped (cheap points), 1 = capped (wasted points)
+function saturation(key,p){
+  const gs=(ATTRS[key].gives||[]).filter(g=>g.a);
+  if(!gs.length||p<=0) return null;
+  return gs.reduce((n,g)=>n+p/(p+g.b),0)/gs.length;
+}
+const AKEYS=Object.keys(ATTRS), ATTR_BASE=1, HP_BASE=100;
+
+// Observed itemisation: armour ≈ 0.62×iLvl Vitality + 2 offensive at ≈0.19×iLvl each.
+const SCALE={vit:0.62, off:0.19};
+
+const ABILITIES = [
+  {id:"bomb_blackhole", name:"Blackhole Bomb", type:"VOID",      by:["precision","will","focus"],     tags:["throwable","explosion"]},
+  {id:"bomb",           name:"Bomb",           type:"EXPLOSIVE", by:["precision","will","focus"],     tags:["throwable","explosion"]},
+  {id:"chain_lightning",name:"Chain Lightning",type:"LIGHTNING", by:["power","ferocity","focus"],     tags:["elemental"]},
+  {id:"chakram",        name:"Chakram",        type:"PHYSICAL",  by:["precision","ferocity","focus"], tags:["throwable","physical"]},
+  {id:"drone",          name:"Drone",          type:"EXPLOSIVE", by:["power","ferocity","focus"],     tags:["explosion"]},
+  {id:"fortify",        name:"Fortify",        type:"SHIELDING", by:["power","will","ferocity"],      tags:["support","non_damaging"]},
+  {id:"smg_gleamtwins", name:"Gleam Twins",    type:"VOID",      by:["precision","ferocity","focus"], tags:["gun"]},
+  {id:"healing_pulse",  name:"Healing Pulse",  type:"HEALING",   by:["power","precision","will"],     tags:["heal","support","non_damaging"]},
+  {id:"icecube",        name:"Ice Cube",       type:"COLD",      by:["will","ferocity","focus"],      tags:["elemental"]},
+  {id:"kusarigama",     name:"Kusarigama",     type:"PHYSICAL",  by:["power","precision","will"],     tags:["throwable","physical"]},
+  {id:"machinegun",     name:"Machinegun",     type:"EXPLOSIVE", by:["power","precision","ferocity"], tags:["gun"]},
+  {id:"minigun",        name:"Minigun",        type:"PHYSICAL",  by:["power","precision","ferocity"], tags:["gun"]},
+  {id:"pyrosphere",     name:"Pyrosphere",     type:"FIRE",      by:["will","ferocity","focus"],      tags:["sphere","elemental"]},
+  {id:"melee_weapon",   name:"Melee weapon attack", type:"PHYSICAL", by:["power","precision","focus"],tags:["melee","weapon"]},
+  {id:"staff_weapon",   name:"Staff weapon attack", type:"VOID", by:["focus","will","ferocity"],      tags:["sphere","weapon"]},
+];
+
+/* Ability-scoping tags. A gear roll tagged X applies to every ability whose own
+   tag list contains X, or whose id is X. So [Gun] is a CATEGORY (3 abilities),
+   while [Pyrosphere] targets a single ability. */
+const TAG_KEYS=["gun","gleamtwins","pyrosphere","chakram","drone","elemental","throwable",
+                "explosion","physical","melee","sphere","weapon","heal","support"];
+const TAG_NAME={gun:"Gun",gleamtwins:"Gleam Twins",pyrosphere:"Pyrosphere",chakram:"Chakram",
+  drone:"Drone",elemental:"Elemental",throwable:"Throwable",explosion:"Explosion",
+  physical:"Physical",melee:"Melee",sphere:"Sphere",weapon:"Weapon",heal:"Heal",support:"Support"};
+function tagMatches(tag,a){ return !!tag && (a.id===tag || (a.tags||[]).includes(tag)); }
+function tagScope(tag){ return ABILITIES.filter(a=>tagMatches(tag,a)); }
+
+const GEAR_LIB = [
+  {"slot":"Arms","name":"Encoded Staff","rarity":"uncommon","lvl":22,"rolls":[{"s":"will","p":1,"v":7},{"s":"precision","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"shielding_power","p":0,"v":21.0}]},
+  {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
+  {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":30.0},{"s":"attack_speed","p":0,"v":7.2}]},
+  {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
+  {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"dot_potency","p":0,"v":37.0},{"s":"heavy_hit_chance","p":0,"v":9.0},{"s":"link_count","p":0,"v":-100.0}]},
+  {"slot":"Arms","name":"Redeemed Celestial Katana","rarity":"legendary","lvl":39,"rolls":[{"s":"power","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"attack_speed","p":0,"v":8.8},{"s":"duration","p":0,"v":35.0}]},
+  {"slot":"Back","name":"Wanderer's Encoded Cloak","rarity":"rare","lvl":4,"rolls":[{"s":"will","p":1,"v":2},{"s":"focus","p":1,"v":2}]},
+  {"slot":"Belt","name":"Nihil Cinch","rarity":"rare","lvl":0,"rolls":[{"s":"void_damage","p":0,"v":20.0},{"s":"aoe_radius","p":0,"v":3.5},{"s":"critical_strike_damage","p":0,"v":12.0}]},
+  {"slot":"Belt","name":"Glacial Girdle","rarity":"legendary","lvl":0,"rolls":[{"s":"cold_damage","p":0,"v":15.0},{"s":"cooldown_reduction","p":0,"v":1.75},{"s":"aoe_radius","p":0,"v":4.05}]},
+  {"slot":"Chest","name":"Ferrox Plate Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"precision","p":1,"v":9},{"s":"will","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":26.0},{"s":"attack_speed","p":0,"v":6.6},{"s":"physical_damage","p":0,"v":6.6}]},
+  {"slot":"Chest","name":"Voltscale Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"attack_speed","p":0,"v":6.3},{"s":"physical_damage","p":0,"v":6.3},{"s":"heavy_hit_chance","p":0,"v":6.3}]},
+  {"slot":"Chest","name":"Necrotic Warrior Plate","rarity":"legendary","lvl":91,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58},{"s":"critical_strike_damage","p":0,"v":41.0},{"s":"attack_speed","p":0,"v":8.5}]},
+  {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
+  {"slot":"Head","name":"Encoded Helm","rarity":"rare","lvl":28,"rolls":[{"s":"vitality","p":1,"v":14},{"s":"precision","p":1,"v":7},{"s":"will","p":1,"v":7},{"s":"attack_speed","p":0,"v":5.5},{"s":"physical_damage","p":0,"v":5.5},{"s":"knockback","p":0,"v":22.0}]},
+  {"slot":"Head","name":"Foundation Bulwark Helm","rarity":"uncommon","lvl":50,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"vitality","p":1,"v":26},{"s":"attack_speed","p":0,"v":7.2}]},
+  {"slot":"Head","name":"Virelda Warcrest Helm","rarity":"legendary","lvl":50,"rolls":[{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"vitality","p":1,"v":26},{"s":"attack_speed","p":0,"v":8.0},{"s":"health","p":0,"v":80.0}]},
+  {"slot":"Head","name":"Neotilus Trailseeker Visor","rarity":"epic","lvl":54,"rolls":[{"s":"power","p":1,"v":13},{"s":"precision","p":1,"v":13},{"s":"vitality","p":1,"v":28},{"s":"critical_strike_damage","p":0,"v":35.0},{"s":"duration","p":0,"v":28.0},{"s":"attack_speed","p":0,"v":8.8}]},
+  {"slot":"Head","name":"Necrotic Warrior Crown","rarity":"legendary","lvl":54,"rolls":[{"s":"power","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"vitality","p":1,"v":28},{"s":"attack_speed","p":0,"v":8.8},{"s":"duration","p":0,"v":39.0},{"s":"aoe_radius","p":0,"v":200.0}]},
+  {"slot":"Neck","name":"Gunner's Pendant","rarity":"rare","lvl":0,"rolls":[{"s":"duration","p":0,"v":50.0}]},
+  {"slot":"Ring 1","name":"Double Tap Ring","rarity":"epic","lvl":0,"rolls":[{"s":"healing_power","p":0,"v":10.5},{"s":"critical_strike_chance","p":0,"v":2.65}]},
+  {"slot":"Ring 1","name":"Pyrosphere Ring","rarity":"epic","lvl":0,"rolls":[{"s":"critical_strike_damage","p":0,"v":34.5},{"s":"cooldown_reduction","p":0,"v":12.0},{"s":"attack_speed","p":0,"v":2.65}]},
+  {"slot":"Ring 1","name":"Catalyst Ring","rarity":"epic","lvl":0,"rolls":[{"s":"dot_interval","p":0,"v":-50.0},{"s":"dot_potency","p":0,"v":24.0},{"s":"cooldown_reduction","p":0,"v":12.0},{"s":"health","p":0,"v":27.5},{"s":"health_regen","p":0,"v":0.55}]},
+  {"slot":"Ring 1","name":"Drone Base Count Ring","rarity":"epic","lvl":0,"rolls":[{"s":"cooldown_reduction","p":0,"v":16.0},{"s":"duration","p":0,"v":16.0},{"s":"knockback","p":0,"v":11.0},{"s":"health","p":0,"v":27.5}]},
+  {"slot":"Ring 1","name":"Always Catch Ring","rarity":"epic","lvl":0,"rolls":[{"s":"attack_speed","p":0,"v":16.0},{"s":"physical_damage","p":0,"v":3.0},{"s":"heavy_hit_chance","p":0,"v":3.0}]},
+  {"slot":"Ring 1","name":"Kusarigama Ring","rarity":"epic","lvl":0,"rolls":[{"s":"physical_damage","p":0,"v":24.0},{"s":"heavy_hit_chance","p":0,"v":8.0},{"s":"attack_speed","p":0,"v":2.65},{"s":"cooldown_reduction","p":0,"v":1.25}]},
+  {"slot":"Ring 1","name":"Ring of Avoidance","rarity":"epic","lvl":0,"rolls":[{"s":"dodge_chance","p":0,"v":10.0},{"s":"cooldown_reduction","p":0,"v":16.0},{"s":"shielding_power","p":0,"v":24.0},{"s":"healing_power","p":0,"v":10.5},{"s":"critical_strike_chance","p":0,"v":2.65}]},
+  {"slot":"Ring 1","name":"Ring of Intimidation","rarity":"legendary","lvl":0,"rolls":[{"s":"threat","p":0,"v":1000.0},{"s":"health","p":0,"v":44.0},{"s":"health_regen","p":0,"v":6.0},{"s":"critical_strike_damage","p":0,"v":13.5},{"s":"attack_speed","p":0,"v":3.35},{"s":"cooldown_reduction","p":0,"v":1.75}]},
+];
+
+const SEC = {
+  attack_speed:"Attack Speed %", cooldown_reduction:"Cooldown Reduction %",
+  critical_strike_chance:"Crit Chance %", critical_strike_damage:"Crit Damage %",
+  heavy_hit_chance:"Heavy Hit Chance %", heavy_hit_damage:"Heavy Hit Damage %",
+  dot_potency:"Dot Potency", dot_interval:"Dot Interval %", healing_power:"Healing Power %",
+  buff_power:"Buff Power", shielding_power:"Shielding Power %", knockback:"Knockback",
+  aoe_radius:"AoE Radius", duration:"Duration %", shots_per_tick:"Shots Per Tick %",
+  projectile_count:"Extra Projectiles", catch_radius:"Catch Radius",
+  physical_damage:"Physical DMG %", fire_damage:"Fire DMG %", cold_damage:"Cold DMG %",
+  lightning_damage:"Lightning DMG %", void_damage:"Void DMG %", ethereal_damage:"Ethereal DMG %",
+  explosive_damage:"Explosive DMG %", health:"Max Health", health_regen:"Health Regen",
+  max_energy:"Max Energy", movement_speed:"Speed %", dodge_chance:"Dodge %",
+  damage_reduction:"Defense %", stun_resistance:"Stun Res %", threat:"Threat",
+};
+const SECKEYS=Object.keys(SEC);
+// Slot names as the game uses them. Your weapon goes in ARMS — there is no
+// separate weapon slot.
+const SLOTS=["Arms","Head","Chest","Feet","Back","Neck","Ring 1","Ring 2","Belt"];
+const SLOT_HINT={Arms:"your weapon"};
+const ARMOUR=new Set(["Head","Chest","Feet"]);      // always rolls Vitality
+const ACCESSORY=new Set(["Neck","Ring 1","Ring 2","Belt"]); // secondaries only
+const SLOT_ALIAS={Weapon:"Arms",Torso:"Chest"};     // migrate older saves/links
+
+const EXAMPLE={
+  loadout:["smg_gleamtwins","machinegun","pyrosphere","staff_weapon"],
+  gear:{
+    Arms:{item:"Voltlite Staff",lv:22,rolls:[{s:"will",p:1,v:7},{s:"ferocity",p:1,v:8},{s:"focus",p:1,v:7},{s:"dot_potency",p:0,v:28},{s:"cooldown_reduction",p:0,v:3.5}]},
+    Head:{item:"Encoded Helm",lv:28,rolls:[{s:"vitality",p:1,v:14},{s:"precision",p:1,v:7},{s:"will",p:1,v:7},{s:"attack_speed",p:0,v:5.5},{s:"physical_damage",p:0,v:5.5},{s:"knockback",p:0,v:22}]},
+    Chest:{item:"Ferrox Plate Chest",lv:47,rolls:[{s:"vitality",p:1,v:29},{s:"precision",p:1,v:9},{s:"will",p:1,v:9},{s:"critical_strike_damage",p:0,v:26},{s:"attack_speed",p:0,v:6.6},{s:"physical_damage",p:0,v:6.6}]},
+    Feet:{item:"ChronoTehc Boots",lv:47,rolls:[{s:"vitality",p:1,v:29},{s:"will",p:1,v:9},{s:"focus",p:1,v:9},{s:"critical_strike_damage",p:0,v:22},{s:"healing_power",p:0,v:22},{s:"dot_potency",p:0,v:22}]},
+    Back:{item:"Wanderer's Encoded Cloak",lv:4,rolls:[{s:"will",p:1,v:2},{s:"focus",p:1,v:2}]},
+    Neck:{item:"Gunner's Pendant",lv:0,rolls:[{s:"duration",p:0,v:50,t:"gun"}]},
+    "Ring 1":{item:"Double Tap Ring",lv:0,rolls:[{s:"shots_per_tick",p:0,v:100,t:"gun"},{s:"attack_speed",p:0,v:24,t:"gun"},{s:"duration",p:0,v:16,t:"gun"},{s:"healing_power",p:0,v:10.5},{s:"critical_strike_chance",p:0,v:2.65}]},
+    "Ring 2":{item:"Pyrosphere Ring",lv:0,rolls:[{s:"projectile_count",p:0,v:1,t:"pyrosphere"},{s:"critical_strike_damage",p:0,v:34.5},{s:"cooldown_reduction",p:0,v:12},{s:"attack_speed",p:0,v:2.65}]},
+    Belt:{item:"Nihil Cinch",lv:0,rolls:[{s:"void_damage",p:0,v:20},{s:"aoe_radius",p:0,v:3.5},{s:"critical_strike_damage",p:0,v:12}]},
+  },
+  compare:{slot:"Chest",item:"Legendary chest (iLvl 64)",rolls:[
+    {s:"vitality",p:1,v:40},{s:"power",p:1,v:12},{s:"ferocity",p:1,v:12},
+    {s:"critical_strike_chance",p:0,v:7.2},{s:"critical_strike_damage",p:0,v:31}]}};
+
+/* ═══════════ STATE + SHARE LINKS ═══════════ */
+const LS="sb_planner_v3";
+let S = fromHash() || loadState();
+
+function loadState(){
+  try{ const d=JSON.parse(localStorage.getItem(LS)); if(d&&d.gear) return normalise(d); }catch(e){}
+  return {loadout:["","","",""], gear:blankGear()};
+}
+function blankGear(){ const g={}; SLOTS.forEach(s=>g[s]=null); return g; }
+function normalise(d){ d.loadout=(d.loadout||["","","",""]).slice(0,4);
+  while(d.loadout.length<4) d.loadout.push("");
+  d.gear=d.gear||{};
+  if(!d.compare) d.compare={slot:"Chest",item:"",rolls:[]};
+  if(SLOT_ALIAS[d.compare.slot]) d.compare.slot=SLOT_ALIAS[d.compare.slot];
+  Object.keys(SLOT_ALIAS).forEach(old=>{                    // migrate renamed slots
+    if(d.gear[old] && !d.gear[SLOT_ALIAS[old]]){ d.gear[SLOT_ALIAS[old]]=d.gear[old]; }
+    delete d.gear[old]; });
+  SLOTS.forEach(s=>{ if(!(s in d.gear)) d.gear[s]=null; }); return d; }
+function persist(){ localStorage.setItem(LS,JSON.stringify(S)); }
+function save(){ persist(); render(); }
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+// Compact share encoding: indices instead of names keeps links short.
+const ALLSTATS=AKEYS.concat(SECKEYS);
+function encodeBuild(){
+  const c={
+    l:S.loadout.map(id=>{const i=ABILITIES.findIndex(a=>a.id===id); return i<0?-1:i;}),
+    g:SLOTS.map(sl=>{
+      const g=S.gear[sl]; if(!g) return 0;
+      return [g.item||"", g.lv||0, (g.rolls||[]).map(r=>[ALLSTATS.indexOf(r.s), r.p?1:0, r.v, r.t?TAG_KEYS.indexOf(r.t)+1:0])];
+    })};
+  const bytes=new TextEncoder().encode(JSON.stringify(c));
+  let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeBuild(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    const bin=atob(b64); const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
+    const c=JSON.parse(new TextDecoder().decode(bytes));
+    const out={loadout:(c.l||[]).map(i=>ABILITIES[i]?ABILITIES[i].id:""), gear:blankGear()};
+    (c.g||[]).forEach((e,i)=>{
+      const sl=SLOTS[i]; if(!sl||!e) return;
+      out.gear[sl]={item:e[0]||"", lv:e[1]||0,
+        rolls:(e[2]||[]).map(r=>{const o={s:ALLSTATS[r[0]],p:r[1]?1:0,v:+r[2]||0};
+            if(r[3]) o.t=TAG_KEYS[r[3]-1]||"gun"; return o;})
+          .filter(r=>r.s)};
+    });
+    return normalise(out);
+  }catch(e){ return null; }
+}
+function fromHash(){
+  const h=location.hash.replace(/^#b=/,'');
+  if(!h || h===location.hash) return null;
+  return decodeBuild(h);
+}
+function shareLink(){
+  const url=location.origin+location.pathname+"#b="+encodeBuild();
+  navigator.clipboard.writeText(url).then(
+    ()=>toast("Share link copied — paste it anywhere"),
+    ()=>{ history.replaceState(null,"","#b="+encodeBuild()); toast("Link is in your address bar — copy it"); });
+}
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),2600); }
+window.addEventListener("hashchange",()=>{ const d=fromHash(); if(d){ S=d; save(); toast("Loaded build from link"); }});
+
+/* ═══════════ COMPUTE ═══════════ */
+function attrTotals(){
+  const t={}; AKEYS.forEach(k=>t[k]=ATTR_BASE);
+  SLOTS.forEach(sl=>{const g=S.gear[sl]; if(!g)return;
+    (g.rolls||[]).forEach(r=>{ if(r.p&&AKEYS.includes(r.s)) t[r.s]+=(+r.v||0); });});
+  return t;
+}
+function secTotals(){
+  const t={}; SLOTS.forEach(sl=>{const g=S.gear[sl]; if(!g)return;
+    (g.rolls||[]).forEach(r=>{ if(!r.p) t[r.s]=(t[r.s]||0)+(+r.v||0); });}); return t;
+}
+function equipped(){ return S.loadout.filter(Boolean).map(id=>ABILITIES.find(a=>a.id===id)).filter(Boolean); }
+function coverage(){ const c={}; AKEYS.forEach(k=>c[k]=0);
+  equipped().forEach(a=>a.by.forEach(k=>c[k]++)); return c; }
+function synergy(a,t){ return a.by.reduce((n,k)=>n+t[k],0); }
+function maxHP(){ const t=attrTotals(), s=secTotals();
+  return HP_BASE + (t.vitality-ATTR_BASE) + (s.health||0); }
+/* An item's LEVEL equals the sum of its primary attribute points — verified on every
+   item observed. So item level is a fixed attribute BUDGET, and the only thing that
+   varies between two items of the same level is how that budget is split. For a damage
+   build the useful measure is how much of the budget avoids Vitality. */
+function itemBudget(sl){
+  const g=S.gear[sl]||null; if(!g) return null;
+  const cov=coverage(); let total=0,vit=0,used=0;
+  (g.rolls||[]).forEach(r=>{
+    if(!r.p||!AKEYS.includes(r.s)) return;
+    const v=+r.v||0; total+=v;
+    if(r.s==="vitality") vit+=v; else if(cov[r.s]>0) used+=v;
+  });
+  if(!total) return null;
+  return {level:total, vit, offensive:total-vit,
+          offShare:Math.round(100*(total-vit)/total),   // quality signal
+          used, usedShare:Math.round(100*used/total)};  // scaled by YOUR abilities
+}
+
+/* ═══════════ RENDER ═══════════ */
+function render(){ renderLoadout();renderGear();renderAttrs();renderPriority();
+  renderAdvice();renderTagged();renderAbilRank();renderCompare();renderRules();renderDisc(); }
+
+
+/* ---- item comparison: swap a candidate into one slot and diff everything ---- */
+function attrTotalsWith(slot,cand){
+  const t={}; AKEYS.forEach(k=>t[k]=ATTR_BASE);
+  SLOTS.forEach(sl=>{
+    const g = (sl===slot) ? cand : S.gear[sl];
+    if(!g) return;
+    (g.rolls||[]).forEach(r=>{ if(r.p&&AKEYS.includes(r.s)) t[r.s]+=(+r.v||0); });
+  });
+  return t;
+}
+function secTotalsWith(slot,cand){
+  const t={};
+  SLOTS.forEach(sl=>{ const g=(sl===slot)?cand:S.gear[sl]; if(!g)return;
+    (g.rolls||[]).forEach(r=>{ if(!r.p) t[r.s]=(t[r.s]||0)+(+r.v||0); });});
+  return t;
+}
+function renderCompare(){
+  const C=S.compare||(S.compare={slot:"Chest",item:"",rolls:[]});
+  document.getElementById("cmpSlot").innerHTML=
+    SLOTS.map(s=>`<option value="${s}" ${s===C.slot?'selected':''}>${s}</option>`).join("");
+  const lib=libFor(C.slot);
+  document.getElementById("cmpLib").innerHTML =
+    `<option value="">${lib.length?`load a documented ${C.slot} item (${lib.length})`:`no documented items for ${C.slot} yet`}</option>`
+    + lib.map((g,i)=>`<option value="${i}">${g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":""}${g.name}${g.lvl?` (iL${g.lvl})`:""}</option>`).join("");
+  const nameEl=document.getElementById("cmpName");
+  if(nameEl.value!==C.item) nameEl.value=C.item||"";
+  document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>rollRow("__cmp",i,r)).join("");
+
+  const out=document.getElementById("cmpOut");
+  if(!(C.rolls||[]).length){ out.innerHTML=
+    `<div class="note">Pick a documented item above, or type a candidate's rolls in, to see whether it beats
+      your current <b>${C.slot}</b>. It diffs your attributes, your secondaries and every equipped ability's usable points.
+      <br><br><b>${GEAR_LIB.length} items documented so far</b> — a sample gathered from real tooltips, not the full game.
+      Anything you type in works just as well.</div>`;
+    return; }
+
+  const cur=attrTotals(), nw=attrTotalsWith(C.slot,C);
+  const cs=secTotals(),  ns=secTotalsWith(C.slot,C);
+  const eq=equipped();
+
+  // attribute deltas
+  const arows=AKEYS.filter(k=>nw[k]!==cur[k]).map(k=>{
+    const d=nw[k]-cur[k], cls=d>0?'up':'dn';
+    return `<div class="k">${ATTRS[k].name}</div><div class="v">${cur[k]}</div>
+            <div class="v eqv">→</div><div class="v ${cls}">${nw[k]} (${d>0?'+':''}${d})</div>`;});
+  // secondary deltas
+  const keys=[...new Set([...Object.keys(cs),...Object.keys(ns)])].filter(k=>(cs[k]||0)!==(ns[k]||0));
+  const srows=keys.map(k=>{
+    const a=cs[k]||0,b=ns[k]||0,d=b-a,cls=d>0?'up':'dn';
+    return `<div class="k">${SEC[k]||k}</div><div class="v">${round(a)}</div>
+            <div class="v eqv">→</div><div class="v ${cls}">${round(b)} (${d>0?'+':''}${round(d)})</div>`;});
+  // per-ability synergy deltas
+  const abr=eq.map(a=>{
+    const x=synergy(a,cur), y=synergy(a,nw), d=y-x, cls=d>0?'up':d<0?'dn':'eqv';
+    return `<div class="k">${a.name}</div><div class="v">${x}</div>
+            <div class="v eqv">→</div><div class="v ${cls}">${y} (${d>0?'+':''}${d})</div>`;});
+
+  const netAbil=eq.reduce((n,a)=>n+(synergy(a,nw)-synergy(a,cur)),0);
+  const better=eq.filter(a=>synergy(a,nw)>synergy(a,cur)).length;
+  const worse =eq.filter(a=>synergy(a,nw)<synergy(a,cur)).length;
+  let cls,msg;
+  if(netAbil>0&&worse===0){ cls="good";
+    msg=`<b>Clear upgrade.</b> Every equipped ability gains — ${netAbil>0?'+':''}${netAbil} usable attribute points in total.`; }
+  else if(netAbil>0){ cls="mixed";
+    msg=`<b>Net gain (+${netAbil} points)</b>, but ${worse} of your ${eq.length} abilities lose out while ${better} gain. Worth it if the winners are your main damage.`; }
+  else if(netAbil<0&&better===0){ cls="bad";
+    msg=`<b>Downgrade.</b> Every equipped ability loses — ${netAbil} usable attribute points overall.`; }
+  else { cls="mixed";
+    msg=`<b>${netAbil===0?'Even on attributes':'Net loss ('+netAbil+' points)'}</b> — ${better} abilities gain, ${worse} lose. Judge it on the secondary stats below.`; }
+
+  out.innerHTML =
+    (arows.length?`<div class="dl"><div class="h">Attribute</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">with candidate</div>${arows.join("")}</div>`:"")
+   +(abr.length?`<div class="dl" style="margin-top:12px"><div class="h">Ability usable points</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${abr.join("")}</div>`:"")
+   +(srows.length?`<div class="dl" style="margin-top:12px"><div class="h">Secondary</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${srows.join("")}</div>`:"")
+   +`<div class="verdict ${cls}">${msg}</div>`;
+}
+
+function renderTagged(){
+  const eq=equipped(), host=document.getElementById("tagged");
+  const rows=[];
+  SLOTS.forEach(sl=>{const g=S.gear[sl]; if(!g)return;
+    (g.rolls||[]).forEach(r=>{ if(r.t) rows.push({sl,item:g.item,r}); });});
+  if(!rows.length){ host.innerHTML=
+    `<div style="color:var(--faint);font-size:12.5px">No ability-scoped rolls. Rolls shown as <code>[Gun] +24% Attack Speed</code> in-game only apply to matching abilities — set their tag in the gear editor.</div>`;
+    return; }
+  host.innerHTML=rows.map(({sl,item,r})=>{
+    const all=tagScope(r.t), mine=eq.filter(a=>tagMatches(r.t,a));
+    const dead=mine.length===0;
+    const names=mine.length?mine.map(a=>a.name).join(", ")
+      :`nothing you have equipped <span style="color:var(--faint)">(covers ${all.map(a=>a.name).join(", ")||"—"})</span>`;
+    return `<div class="arow ${dead?'':'eq'}" style="${dead?'border-color:#5d3a3f;background:#20121a':''}">
+      <span class="ty">[${TAG_NAME[r.t]||r.t}]</span>
+      <span class="nm">${SEC[r.r?r.r.s:r.s]||r.s} <b style="color:var(--hl)">+${r.v}</b>
+        <span style="color:var(--faint);font-size:11px">· ${esc(item)}</span></span>
+      <span class="by" style="color:${dead?'var(--bad)':'var(--good)'}">${names}</span></div>`;
+  }).join("")
+  + `<div class="note info">A tagged roll only applies to abilities carrying that tag.
+     <b>[Gun]</b> is a category — it boosts <b>Gleam Twins, Minigun and Machinegun</b> alike.
+     <b>[Pyrosphere]</b>, <b>[Chakram]</b> and <b>[Drone]</b> target one ability each.</div>`;
+}
+
+function renderLoadout(){
+  document.getElementById("loadout").innerHTML=[0,1,2,3].map(i=>{
+    const cur=S.loadout[i]||"";
+    return `<select class="pick" onchange="setLoadout(${i},this.value)">`+
+      `<option value="">— empty slot ${i+1} —</option>`+
+      ABILITIES.map(a=>`<option value="${a.id}" ${a.id===cur?"selected":""}>${a.name}</option>`).join("")+
+      `</select>`;
+  }).join("");
+}
+function renderAttrs(){
+  const t=attrTotals(),cov=coverage(),eqN=equipped().length,max=Math.max(...Object.values(t),1);
+  document.getElementById("attrs").innerHTML=AKEYS.map(k=>{
+    const A=ATTRS[k],v=t[k],c=cov[k];
+    const col=A.role==="def"?"var(--def)":A.role==="hyb"?"var(--hyb)":"linear-gradient(90deg,var(--acc),var(--acc2))";
+    return `<div class="attr ${c>0?'used':'unused'}">
+      <div class="cov c${Math.min(c,4)}">${A.role==="def"?"def":c+"/"+(eqN||0)}</div>
+      <div class="n">${A.name}</div><div class="val">${v}</div>
+      <div class="bar"><i style="width:${100*v/max}%;background:${col}"></i></div></div>`;
+  }).join("");
+  const hp=maxHP(), t2=attrTotals();
+  document.getElementById("hpNote").className="note info";
+  document.getElementById("hpNote").innerHTML=
+    `<b>Max HP ≈ ${hp}</b> (100 base + ${t2.vitality-1} Vitality${secTotals().health?" + "+secTotals().health+" gear":""}). `+
+    `Vitality scales no ability, but <b>armour always rolls it as its largest primary</b> — it isn't a stat you trade away. `+
+    `High HP mostly signals <b>high item level</b>, and higher item level raises your offensive attributes too.`;
+}
+function renderPriority(){
+  const t=attrTotals(),cov=coverage(),eq=equipped();
+  const host=document.getElementById("priority"),note=document.getElementById("priNote");
+  if(!eq.length){ host.innerHTML=`<div style="color:var(--faint);font-size:12.5px">Pick your abilities above to get a ranking.</div>`;
+    note.innerHTML=`<b>Start here:</b> pick the abilities you actually run, above. Every ability is scaled by
+      exactly 3 of the 5 offensive attributes, so your loadout decides which stats are worth chasing —
+      and <b>Vitality scales none of them</b>.`; return; }
+  const ranked=AKEYS.map(k=>({k,cov:cov[k],v:t[k]})).sort((a,b)=>b.cov-a.cov||a.v-b.v);
+  host.innerHTML=ranked.map((r,i)=>{
+    const A=ATTRS[r.k];
+    const tag=r.cov===0?`<span class="tag t-def">survivability</span>`
+      :`<span class="tag ${A.role==='def'?'t-def':A.role==='hyb'?'t-hyb':'t-off'}">${r.cov}/${eq.length} abilities</span>`;
+    const p=r.v-ATTR_BASE, sat=saturation(r.k,p);
+    const satTag = sat===null ? "" :
+      `<span class="tag ${sat>0.66?'t-def':sat>0.4?'t-hyb':'t-off'}" title="how far along the diminishing-returns curve">${Math.round(sat*100)}% saturated</span>`;
+    const fx=A.gives.map(g=>{
+      if(g.lin!=null) return `<b>+${round(g.lin*p)}</b> ${g.s}`;
+      if(g.a) return `<b>+${round(curveMargin(g,p))}${g.unit||''}</b>/pt now · ${g.s}`;
+      return `<span style="color:var(--faint)">${g.s}</span>`;
+    }).join(" · ");
+    return `<div class="pri"><span class="p">${i+1}</span><span class="nm">${A.name}</span>${satTag}${tag}<span class="v">${r.v}</span></div>
+      <div class="fx">${fx}</div>`;}).join("");
+  const top=ranked.find(r=>r.cov>0);
+  const sats=AKEYS.map(k=>({k,s:saturation(k,t[k]-ATTR_BASE)})).filter(x=>x.s!==null)
+    .sort((a,b)=>b.s-a.s);
+  const worst=sats[0];
+  note.innerHTML=top?`<b>${ATTRS[top.k].name}</b> scales ${top.cov} of your ${eq.length} abilities and you're at <b>${top.v}</b> — best return per point. Prefer armour that rolls it alongside the unavoidable Vitality.`
+    +`<br><br><b>Percentage stats have diminishing returns</b> (<code>y = a·p/(p+b)</code>), so a low
+      attribute is worth far more per point than a high one — the 1st point of a stat can be
+      <b>5&times;</b> the 34th. That's why the ranking favours stats you're light on.`
+    +(worst&&worst.s>0.5?` <b>${ATTRS[worst.k].name}</b> is ~${Math.round(worst.s*100)}% saturated — extra points there do little.`:``)
+    +` Flat stats (Max Health, Regen) stay linear and never saturate.`
+    :`None of your attributes scale your chosen abilities yet.`;
+}
+function renderAdvice(){
+  const t=attrTotals(),cov=coverage(),eq=equipped();
+  const host=document.getElementById("advice");
+  if(!eq.length){ host.innerHTML=`<li>Pick your abilities to generate advice.</li>`; return; }
+  const tips=[];
+
+  // 1) item level is the master lever
+  const lv=SLOTS.filter(sl=>!ACCESSORY.has(sl)).map(sl=>S.gear[sl]&&S.gear[sl].lv).filter(x=>x>0);
+  if(lv.length){
+    const lo=Math.min(...lv), hi=Math.max(...lv);
+    const slot=SLOTS.find(sl=>S.gear[sl]&&S.gear[sl].lv===lo);
+    const gain=Math.round(SCALE.off*(hi-lo));
+    if(hi-lo>=8&&gain>=1) tips.push({t:`Level up your ${slot} (iLvl ${lo}, lowest you have)`,
+      w:`Bringing it to iLvl ${hi} would add roughly +${gain} to each of its two offensive attributes (and ~+${Math.round(SCALE.vit*(hi-lo))} Vitality). Item level raises every stat at once — it's the single biggest lever.`});
+  }
+  // 2) top lever
+  const ranked=AKEYS.map(k=>({k,cov:cov[k],v:t[k]})).filter(r=>r.cov>0).sort((a,b)=>b.cov-a.cov||a.v-b.v);
+  if(ranked.length){ const r=ranked[0];
+    tips.push({t:`Prioritise ${ATTRS[r.k].name} on new armour`,
+      w:`It scales ${r.cov}/${eq.length} of your abilities and you're only at ${r.v}. Armour rolls Vitality plus two offensive stats — aim for pieces where ${ATTRS[r.k].name} is one of the two. Gives ${ATTRS[r.k].gives.map(g=>g.s).join(", ")}.`});}
+  // 3) starved attribute an equipped ability needs
+  const starved=AKEYS.filter(k=>cov[k]>0&&t[k]<=3);
+  if(starved.length){
+    const who=starved.map(k=>{const users=eq.filter(a=>a.by.includes(k)).map(a=>a.name);
+      return `<b>${ATTRS[k].name}</b> (${t[k]}) — needed by ${users.join(", ")}`;});
+    tips.push({t:`Starved attribute${starved.length>1?'s':''}`,
+      w:`${who.join("; ")}. Nothing in your gear supplies ${starved.length>1?'them':'it'}, so ${starved.length>1?'those abilities are':'that ability is'} running on close to nothing.`});
+  }
+  // 4) mismatched ability + concrete replacement
+  if(eq.length>1){
+    const sc=eq.map(a=>({a,s:synergy(a,t)})).sort((x,y)=>x.s-y.s);
+    const worst=sc[0],best=sc[sc.length-1];
+    if(best.s>worst.s*1.3){
+      const better=ABILITIES.filter(x=>!S.loadout.includes(x.id)).map(x=>({x,s:synergy(x,t)}))
+        .sort((p,q)=>q.s-p.s)[0];
+      tips.push({t:`${worst.a.name} fits your stats worst`,
+        w:`It runs on ${worst.a.by.map(k=>ATTRS[k].name+" ("+t[k]+")").join(" + ")} = ${worst.s} usable points, vs ${best.s} for ${best.a.name}.`
+          +(better&&better.s>worst.s?` <b>${better.x.name}</b> (${better.x.type}) would use ${better.s}, running on ${better.x.by.map(k=>ATTRS[k].name).join(" + ")}.`:``)});}
+  }
+  // 5) heavy hit synergy
+  if(cov.ferocity>0&&cov.focus>0) tips.push({t:`Ferocity + Focus compound`,
+    w:`Focus raises Heavy Hit <i>chance</i>, Ferocity raises Heavy Hit <i>damage</i>. Heavy hits double an attack and crit damage has no cap, so stacking both multiplies out.`});
+  // 6) tagged rolls that match nothing equipped
+  const orphan={};
+  SLOTS.forEach(sl=>{const g=S.gear[sl]; if(!g)return;
+    (g.rolls||[]).forEach(r=>{ if(r.t && !eq.some(a=>tagMatches(r.t,a))){
+      (orphan[r.t]=orphan[r.t]||[]).push(g.item); }});});
+  Object.keys(orphan).forEach(tag=>{
+    const scope=tagScope(tag).map(a=>a.name);
+    tips.push({t:`[${TAG_NAME[tag]||tag}] rolls are doing nothing`,
+      w:`${[...new Set(orphan[tag])].join(", ")} carry [${TAG_NAME[tag]||tag}] modifiers, but none of your equipped abilities have that tag`
+        +(scope.length?` — it would apply to ${scope.join(", ")}.`:`.`)});});
+
+  host.innerHTML=tips.length?tips.map(x=>`<li><b>${x.t}</b><span class="why">${x.w}</span></li>`).join("")
+    :`<li>No obvious inefficiencies — your gear and abilities line up.</li>`;
+}
+function renderAbilRank(){
+  const t=attrTotals(),eq=S.loadout.filter(Boolean);
+  const rows=ABILITIES.map(a=>({a,s:synergy(a,t)})).sort((x,y)=>y.s-x.s);
+  const mx=rows[0]?rows[0].s:1;
+  const sug=rows.filter(r=>!eq.includes(r.a.id)).slice(0,2).map(r=>r.a.id);
+  document.getElementById("abilrank").innerHTML=rows.map((r,i)=>{
+    const isEq=eq.includes(r.a.id),isS=!isEq&&sug.includes(r.a.id);
+    return `<div class="arow ${isEq?'eq':''} ${isS?'sug':''}"><span class="rank">${i+1}</span>
+      <span class="nm">${r.a.name}</span>
+      ${isEq?'<span class="badge eq">equipped</span>':''}${isS?'<span class="badge sug">good fit</span>':''}
+      <span class="ty">${r.a.type}</span>
+      <span class="by">${r.a.by.map(k=>k.slice(0,3).toUpperCase()).join("·")}</span>
+      <span class="sc" style="color:${r.s>=mx*0.85?'var(--good)':r.s>=mx*0.6?'var(--hl)':'var(--faint)'}">${r.s}</span></div>`;
+  }).join("");
+  document.getElementById("abilNote").innerHTML=
+    `Score = attribute points you own that an ability can actually use (sum of its 3 scaling attributes). `+
+    `A <b>fit</b> measure, not predicted damage — base damage, cooldown and playstyle still matter.`;
+}
+function renderRules(){
+  document.getElementById("itemRules").innerHTML=
+    `<b>How gear rolls:</b> <b>Armour</b> (Head/Torso/Feet) always gives Vitality as its largest primary plus <b>2 offensive attributes</b>. `+
+    `<b>Arms</b> (your weapon) and <b>Back</b> give offensive attributes only, no Vitality. <b>Accessories</b> (Neck/Rings/Belt) give <b>secondary stats only</b> — no attributes. `+
+    `Roughly, armour scales as <code>Vitality ≈ 0.62 × iLvl</code> and <code>each offensive ≈ 0.19 × iLvl</code>. `+
+    `Your weapon equips to <b>Arms</b> — there is no separate weapon slot.`;
+}
+function renderGear(){
+  document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
+    const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
+    const eff=e?`<span class="eff ${e.offShare>=60?'hi':e.offShare>=40?'mid':'lo'}" title="share of this item's level spent on offensive attributes">${e.offShare}% off</span>`:"";
+    return `<details class="slot"><summary>
+      <span class="slotname">${sl}</span>
+      <span class="itemname ${g?'':'empty'}">${g?esc(g.item):(SLOT_HINT[sl]?'empty — '+SLOT_HINT[sl]:'empty')}</span>
+      ${e?`<span class="ilvl">i${e.level}</span>`:''}${eff}</summary>
+      <div class="body">
+        ${(()=>{const lib=libFor(sl); return lib.length?`<select class="pick" style="margin-bottom:7px" aria-label="Load a documented item into ${sl}" onchange="equipFromLib('${sl}',this.value)">
+          <option value="">— load a documented ${sl} item (${lib.length}) —</option>
+          ${lib.map((x,i)=>`<option value="${i}">${x.rarity?x.rarity[0].toUpperCase()+x.rarity.slice(1)+" · ":""}${x.name}${x.lvl?` (iL${x.lvl})`:""}</option>`).join("")}
+        </select>`:""})()}
+        <div class="nameRow">
+          <input class="itemname-edit" placeholder="Item name" aria-label="Item name for ${sl}" value="${g?esc(g.item):''}" oninput="setName('${sl}',this.value)">
+          ${ACCESSORY.has(sl)||!e?'':`<span class="lvbadge" title="item level = sum of primary attribute points">iLvl ${e.level}</span>`}
+        </div>
+        ${rolls.map((r,i)=>rollRow(sl,i,r)).join("")}
+        ${ACCESSORY.has(sl)?'':`<button class="addbtn" onclick="addRoll('${sl}',1)">+ primary (attribute)</button>`}
+        <button class="addbtn" onclick="addRoll('${sl}',0)">+ secondary</button>
+        ${g?`<button class="addbtn" style="background:#2a1620;color:#e08596;border-color:#3a2330" onclick="clearSlot('${sl}')">clear</button>`:''}
+      </div></details>`;}).join("");
+}
+function rollRow(sl,i,r){
+  const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
+                :SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("");
+  return `<div class="rollrow"><span class="kind">${r.p?'primary':'secondary'}</span>
+    <select onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
+    <input type="number" step="0.05" value="${r.v}" onchange="setRoll('${sl}',${i},'v',this.value)">
+    ${r.p?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
+      <option value="">all abilities</option>
+      <optgroup label="Category (multiple abilities)">${["gun","elemental","throwable","explosion","physical","melee","sphere","weapon","heal","support"]
+        .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
+      <optgroup label="Single ability">${["gleamtwins","pyrosphere","chakram","drone"]
+        .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
+    </select>`}
+    <button onclick="delRoll('${sl}',${i})">✕</button></div>`;
+}
+function renderDisc(){
+  document.getElementById("disc").innerHTML=
+    `<b>Soulbound Build Planner</b> — a free fan-made tool. Not affiliated with, endorsed by, or associated with SpiderWare or Soulbound: Online. `+
+    `All game names and trademarks belong to their respective owners. Values are community-maintained approximations that can change with game updates — `+
+    `always trust your in-game stat panel over this tool. Builds are stored only in your own browser; share links encode the build in the URL itself.`+
+    `<br><br>Open source — <a href="https://github.com/rages4calm/soulbound-build-planner" rel="noopener">view or contribute on GitHub</a>. Spotted a wrong number, or an item that's missing? Open an issue.`;
+}
+
+/* ═══════════ EDIT OPS ═══════════ */
+const gearOf=sl=> sl==="__cmp" ? (S.compare||(S.compare={slot:"Chest",item:"",rolls:[]})) : S.gear[sl];
+const round=n=>Math.round(n*100)/100;
+function setCmpSlot(v){ S.compare.slot=v; save(); }
+function libFor(slot){
+  const s = slot.startsWith("Ring") ? "Ring 1" : slot;
+  return GEAR_LIB.filter(g=>g.slot===s);
+}
+function loadFromLib(idx){
+  if(idx==="") return;
+  const g=libFor(S.compare.slot)[+idx]; if(!g) return;
+  S.compare={slot:S.compare.slot,item:g.name,rolls:JSON.parse(JSON.stringify(g.rolls))};
+  save(); toast(`Loaded ${g.name}`);
+}
+function equipFromLib(slot,idx){
+  if(idx==="") return;
+  const g=libFor(slot)[+idx]; if(!g) return;
+  S.gear[slot]={item:g.name,rolls:JSON.parse(JSON.stringify(g.rolls))};
+  save(); toast(`Equipped ${g.name}`);
+}
+function setCmpName(v){ S.compare.item=v; persist(); }
+function addCmpRoll(p){ const C=gearOf("__cmp");
+  C.rolls.push(p?{s:ARMOUR.has(C.slot)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0}); save(); }
+function clearCmp(){ S.compare={slot:S.compare.slot,item:"",rolls:[]}; save(); }
+
+function setLoadout(i,v){ S.loadout[i]=v; save(); }
+function setName(sl,v){ if(!S.gear[sl])S.gear[sl]={item:v,lv:0,rolls:[]}; S.gear[sl].item=v; persist(); }
+function setLv(sl,v){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]}; S.gear[sl].lv=+v||0; save(); }
+function setRoll(sl,i,f,v){ const r=gearOf(sl).rolls[i]; r[f]=f==='v'?(+v||0):v; save(); }
+function setTag(sl,i,tag){ const r=gearOf(sl).rolls[i]; if(tag)r.t=tag; else delete r.t; save(); }
+function delRoll(sl,i){ gearOf(sl).rolls.splice(i,1); save(); }
+function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]};
+  S.gear[sl].rolls.push(p?{s:ARMOUR.has(sl)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0}); save(); }
+function clearSlot(sl){ S.gear[sl]=null; save(); }
+
+document.getElementById("shareBtn").onclick=shareLink;
+document.getElementById("exampleBtn").onclick=()=>{ S=normalise(clone(EXAMPLE)); save(); };
+document.getElementById("clearBtn").onclick=()=>{ S.gear=blankGear(); save(); };
+document.getElementById("exportBtn").onclick=()=>{ const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="soulbound-build.json"; a.click(); };
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=e=>{const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader(); rd.onload=()=>{ try{const d=JSON.parse(rd.result);
+    if(d&&d.gear){ S=normalise(d); save(); } else alert("Not a build file");}catch(err){alert("Invalid JSON");}};
+  rd.readAsText(f);};
+function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+render();
+</script>
+</body>
+</html>
