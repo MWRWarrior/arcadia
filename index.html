@@ -430,7 +430,8 @@ const LS="sb_planner_v3";
 let S = fromHash() || loadState();   // legacy links + stored build, synchronous
 // A compressed link can't be read synchronously, so decode it after first paint.
 (async()=>{
-  const raw=location.hash.replace(/^#b=/,"");
+  if(await loadFromShortLink()) return;          // /b/<id>
+  const raw=location.hash.replace(/^#b=/,"");    // #b=c.<payload>
   if(!raw || raw===location.hash || !raw.startsWith("c.")) return;
   const d=await decodeBuildAsync(raw);
   if(d){ S=normalise(d); persist(); render(); }
@@ -526,15 +527,47 @@ function fromHash(){
   if(!h || h===location.hash) return null;
   return decodeBuild(h);
 }
+// Try for a short link first (/b/x7k2p) so the URL doesn't look like spam to
+// chat auto-moderators. If the API is unreachable, fall back to the long
+// self-contained link — sharing must never break just because a server is down.
 async function shareLink(){
   const code=await encodeBuild();
-  const url=location.origin+location.pathname+"#b="+code;
+  const longUrl=location.origin+location.pathname+"#b="+code;
+  let url=longUrl, short=false;
+  try{
+    const ctl=new AbortController();
+    const timer=setTimeout(()=>ctl.abort(),4000);
+    const res=await fetch("api/build.php",{method:"POST",signal:ctl.signal,
+      headers:{"Content-Type":"application/json"},body:JSON.stringify({p:code})});
+    clearTimeout(timer);
+    if(res.ok){
+      const j=await res.json();
+      if(j&&j.id){ url=location.origin+"/b/"+j.id; short=true; }
+    }
+  }catch(e){ /* offline, blocked, or no backend — long link still works */ }
   try{
     await navigator.clipboard.writeText(url);
-    toast(`Share link copied (${url.length} chars)`);
+    toast(short?`Short link copied (${url.length} chars)`
+                :`Link copied (${url.length} chars) — short links unavailable`);
   }catch(e){
-    history.replaceState(null,"","#b="+code);
-    toast("Link is in your address bar — copy it");
+    if(!short) history.replaceState(null,"","#b="+code);
+    toast("Link ready in the address bar — copy it");
+  }
+}
+// Opening /b/x7k2p: fetch the stored build and load it.
+async function loadFromShortLink(){
+  const m=location.pathname.match(/\/b\/([A-Za-z0-9]{4,12})\/?$/);
+  if(!m) return false;
+  try{
+    const res=await fetch("/api/build.php?id="+encodeURIComponent(m[1]));
+    if(!res.ok) throw new Error(res.status);
+    const j=await res.json();
+    const d=await decodeBuildAsync(j.p||"");
+    if(d){ S=normalise(d); persist(); render(); return true; }
+    throw new Error("bad payload");
+  }catch(e){
+    toast("Couldn't load that build link");
+    return false;
   }
 }
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
@@ -1056,7 +1089,7 @@ document.getElementById("exampleBtn").onclick=()=>{ S=normalise(clone(EXAMPLE));
 document.getElementById("clearBtn").onclick=()=>{
   S={loadout:["","","",""],gear:blankGear(),compare:{slot:"Chest",item:"",rolls:[]}};
   try{ localStorage.removeItem(LS); }catch(e){}
-  history.replaceState(null,"",location.pathname);   // drop any shared-build hash
+  history.replaceState(null,"",location.origin+"/");   // drop any shared-build hash or /b/ path
   render(); toast("Reset — nothing saved in this browser");
 };
 document.getElementById("exportBtn").onclick=()=>{ const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});

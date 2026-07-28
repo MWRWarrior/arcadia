@@ -50,6 +50,91 @@ git clone https://github.com/rages4calm/arcadia.git
 Open `index.html` in a browser, or drop it on any static host. Your builds are stored in your
 own browser's local storage and never leave your machine.
 
+## Short links (optional)
+
+Optional. Arcadia works fine without this — the share button just produces the long
+self-contained link instead. Set this up if you want `arcadia.carl-prewitt.com/b/x7k2p`.
+
+Takes about five minutes in cPanel.
+
+### 1. Create the database
+
+cPanel → **MySQL Databases**
+
+1. Create a database, e.g. `arcadia`. cPanel prefixes it with your account name, so you'll
+   end up with something like `carlpre_arcadia`.
+2. Create a user, e.g. `arcadia`, with a strong password. Save the password.
+3. Under **Add User To Database**, add that user to that database with **ALL PRIVILEGES**.
+
+### 2. Create the tables
+
+cPanel → **phpMyAdmin** → select your new database → **SQL** tab → paste the contents of
+`schema.sql` → **Go**.
+
+You should end up with two tables: `builds` and `rate_limit`.
+
+### 3. Add your credentials
+
+Copy `api/config.example.php` to `api/config.php` and fill in the four database values plus a
+random `ip_salt` (any long random string — it's used so IP addresses are hashed rather than
+stored).
+
+**`config.php` must never be committed to git.** It's already in `.gitignore`.
+
+### 4. Upload
+
+Into your subdomain's folder (`public_html/arcadia`):
+
+```
+index.html
+robots.txt
+sitemap.xml
+.htaccess
+api/build.php
+api/config.php        ← the one you just filled in, not the example
+```
+
+`.htaccess` is what makes `/b/x7k2p` work, so don't skip it. If your FTP client hides dotfiles,
+enable "show hidden files".
+
+### 5. Check it
+
+```bash
+curl -X POST https://arcadia.carl-prewitt.com/api/build.php \
+  -H "Content-Type: application/json" -d '{"p":"c.testtesttest"}'
+```
+
+Expect `{"id":"abc12"}`. Then open `https://arcadia.carl-prewitt.com/b/abc12` — it should load
+the app (it'll fail to decode that fake payload, which is fine; you're testing routing).
+
+Real test: open Arcadia, load a build, press **Copy share link**. You should get a short URL and
+the toast should say "Short link copied".
+
+### If something's wrong
+
+| Symptom | Cause |
+|---|---|
+| Toast says "short links unavailable" | PHP couldn't run, or `config.php` is missing/wrong. The long link still works, so nothing is broken for users. |
+| `Server not configured` | `config.php` isn't there, or isn't next to `build.php`. |
+| `Database unavailable` | Credentials wrong, or the user wasn't added to the database with privileges. |
+| `/b/xxxxx` 404s | `.htaccess` didn't upload, or the host has `AllowOverride` off — ask support to enable it. |
+| `Slow down a moment` | Rate limit hit (30/hour per address). Raise `rate_limit_per_hour` in config. |
+
+### What gets stored
+
+Only the encoded build string, a creation timestamp, and a view counter. No accounts, no personal
+data. IP addresses are salted-hashed purely for rate limiting and expire after an hour.
+
+Identical builds reuse the same id, so re-sharing the same build doesn't grow the table.
+
+### Housekeeping
+
+Nothing required. If you ever want to prune unused builds:
+
+```sql
+DELETE FROM builds WHERE hits = 0 AND created_at < (NOW() - INTERVAL 90 DAY);
+```
+
 ## Contributing
 
 The most useful contribution is **gear data**. The game has far more items than are documented
