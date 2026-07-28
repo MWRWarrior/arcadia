@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Build Gallery — Arcadia | Soulbound: Online</title>
+<meta name="description" content="Browse and vote on player-made Soulbound: Online builds. Open any build straight into the Arcadia planner. No account needed."/>
+<link rel="canonical" href="https://arcadia.carl-prewitt.com/gallery.html"/>
+<meta name="robots" content="index,follow"/>
+<meta name="theme-color" content="#0b0e14"/>
+<meta name="color-scheme" content="dark"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Arcadia"/>
+<meta property="og:title" content="Build Gallery — Arcadia"/>
+<meta property="og:description" content="Player-made builds for Soulbound: Online. Browse, vote, and open any of them in the planner."/>
+<meta property="og:url" content="https://arcadia.carl-prewitt.com/gallery.html"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%230b0e14&#39;/%3E%3Cpath d=&#39;M16 5l9 5v8c0 5-4 8-9 9-5-1-9-4-9-9v-8z&#39; fill=&#39;none&#39; stroke=&#39;%237b5cff&#39; stroke-width=&#39;2.5&#39;/%3E%3C/svg%3E"/>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121722; --panel2:#171d2b; --edge:#232c3f;
+    --ink:#c8d3e6; --dim:#97a3bd; --faint:#7b88a3;
+    --acc:#7b5cff; --acc2:#00d0c0; --good:#37d67a; --warn:#ffb84d; --bad:#ff5c6c; --hl:#e8c87e;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --ease:cubic-bezier(.22,1,.36,1); --dur:180ms;
+  }
+  *{box-sizing:border-box}
+  @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition-duration:.01ms!important}}
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{
+    outline:2px solid var(--acc2);outline-offset:2px;border-radius:6px}
+  body{margin:0;background:radial-gradient(1100px 520px at 82% -12%,#17213c 0%,transparent 62%),var(--bg);
+    color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;overflow-x:hidden}
+  h1{margin:0;font-size:20px;letter-spacing:.3px}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 18px 70px}
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .home{color:var(--acc2);text-decoration:none;font-size:12.5px}
+  .tagline{color:var(--dim);font-size:12.5px;margin:3px 0 16px;max-width:70ch}
+  .bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .tab{background:#141a28;border:1px solid var(--edge);color:var(--dim);border-radius:6px;
+    padding:6px 12px;cursor:pointer;font:inherit;font-size:12.5px;transition:all var(--dur) var(--ease)}
+  .tab[aria-selected="true"]{background:#1b2c4a;color:#a8c8ff;border-color:#2f4b78}
+  select{background:#0b0f18;border:1px solid var(--edge);color:var(--ink);border-radius:6px;
+    padding:6px 8px;font-family:var(--mono);font-size:12px;max-width:220px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--edge);
+    border-radius:11px;padding:12px 13px;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .card h2{margin:0;font-size:15px;font-weight:650;line-height:1.3;word-break:break-word}
+  .by{font-size:11.5px;color:var(--faint)}
+  .abils{display:flex;gap:5px;flex-wrap:wrap}
+  .ab{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:5px;background:#182031;color:var(--dim)}
+  .attrs{display:flex;gap:6px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .attrs b{color:var(--ink)}
+  .foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid #141a27}
+  .vote{background:#141a28;border:1px solid var(--edge);color:var(--dim);border-radius:6px;
+    padding:5px 10px;cursor:pointer;font:inherit;font-size:12.5px;display:flex;align-items:center;gap:5px;
+    transition:all var(--dur) var(--ease)}
+  .vote[aria-pressed="true"]{background:#1d3a18;border-color:#2f5a2a;color:var(--good)}
+  .vote:hover{filter:brightness(1.25)}
+  .open{margin-left:auto;background:#1b2c4a;border:1px solid #2f4b78;color:#a8c8ff;border-radius:6px;
+    padding:5px 11px;text-decoration:none;font-size:12.5px}
+  .open:hover{filter:brightness(1.2)}
+  .hits{font-size:11px;color:var(--faint)}
+  .note{font-size:12.5px;color:var(--dim);background:#0f1626;border:1px solid var(--edge);
+    border-left:3px solid var(--acc);border-radius:7px;padding:10px 12px;margin:14px 0}
+  .note.bad{border-left-color:var(--bad)}
+  .empty{color:var(--dim);font-size:13px;padding:28px 4px;text-align:center;line-height:1.7}
+  .more{display:block;margin:16px auto 0;background:#141a28;border:1px solid var(--edge);color:var(--dim);
+    border-radius:6px;padding:8px 16px;cursor:pointer;font:inherit}
+  .disc{color:var(--faint);font-size:11px;margin-top:28px;border-top:1px solid var(--edge);padding-top:14px;line-height:1.7}
+  .disc a{color:var(--acc2)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  @media (max-width:560px){ .wrap{padding:14px 12px 60px} .grid{grid-template-columns:1fr} select{max-width:none;flex:1} }
+</style>
+</head>
+<body>
+<a href="#main" class="sr-only">Skip to builds</a>
+<div class="wrap">
+  <header>
+    <h1>Build Gallery</h1>
+    <a class="home" href="/">← back to the planner</a>
+  </header>
+  <div class="tagline">Builds shared by players. Open any of them straight into the planner to see
+    what actually scales it. No account needed — voting is one per person per build.</div>
+
+  <div class="bar" role="tablist" aria-label="Sort builds">
+    <button class="tab" id="tabTop" role="tab" aria-selected="true"  onclick="setSort('top')">Top</button>
+    <button class="tab" id="tabNew" role="tab" aria-selected="false" onclick="setSort('new')">Newest</button>
+    <select id="filter" aria-label="Filter by ability" onchange="setFilter(this.value)"></select>
+  </div>
+
+  <main id="main"><div class="grid" id="grid"></div></main>
+  <div id="status"></div>
+  <footer class="disc" id="disc"></footer>
+</div>
+
+<script>
+"use strict";
+// Kept in step with the planner's ability list.
+const ABILITIES=[
+ {id:"bomb_blackhole",name:"Blackhole Bomb"},{id:"bomb",name:"Bomb"},
+ {id:"chain_lightning",name:"Chain Lightning"},{id:"chakram",name:"Chakram"},
+ {id:"drone",name:"Drone"},{id:"fortify",name:"Fortify"},
+ {id:"smg_gleamtwins",name:"Gleam Twins"},{id:"healing_pulse",name:"Healing Pulse"},
+ {id:"icecube",name:"Ice Cube"},{id:"kusarigama",name:"Kusarigama"},
+ {id:"machinegun",name:"Machinegun"},{id:"minigun",name:"Minigun"},
+ {id:"pyrosphere",name:"Pyrosphere"},{id:"melee_weapon",name:"Melee weapon attack"},
+ {id:"staff_weapon",name:"Staff weapon attack"}];
+const ATTR_NAMES=["Power","Precision","Will","Ferocity","Vitality","Focus"];
+const abilName=id=>(ABILITIES.find(a=>a.id===id)||{}).name||id;
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let sort="top", filter="", page=0, loading=false;
+
+document.getElementById("filter").innerHTML =
+  `<option value="">every ability</option>`+
+  ABILITIES.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("");
+
+function setSort(s){
+  sort=s; page=0;
+  document.getElementById("tabTop").setAttribute("aria-selected", s==="top");
+  document.getElementById("tabNew").setAttribute("aria-selected", s==="new");
+  document.getElementById("grid").innerHTML="";
+  load();
+}
+function setFilter(v){ filter=v; page=0; document.getElementById("grid").innerHTML=""; load(); }
+
+function card(b){
+  const abils=(b.summary&&b.summary.abilities||[]).map(a=>`<span class="ab">${esc(abilName(a))}</span>`).join("");
+  const attrs=(b.summary&&b.summary.attrs||[]).map((v,i)=>
+    v>1?`<span><b>${v}</b> ${ATTR_NAMES[i]||""}</span>`:"").filter(Boolean).join("");
+  return `<article class="card">
+    <h2>${esc(b.title||"Untitled build")}</h2>
+    ${b.author?`<div class="by">by ${esc(b.author)}</div>`:``}
+    ${abils?`<div class="abils">${abils}</div>`:``}
+    ${attrs?`<div class="attrs">${attrs}</div>`:``}
+    <div class="foot">
+      <button class="vote" aria-pressed="${b.voted?"true":"false"}"
+        onclick="vote('${esc(b.id)}',this)" title="One vote per person">
+        ▲ <span>${b.votes|0}</span></button>
+      <span class="hits">${b.hits|0} opened</span>
+      <a class="open" href="/b/${esc(b.id)}">Open in planner</a>
+    </div></article>`;
+}
+
+async function load(){
+  if(loading) return; loading=true;
+  const st=document.getElementById("status");
+  st.innerHTML=`<div class="empty">Loading…</div>`;
+  try{
+    const q=new URLSearchParams({sort,page:String(page)});
+    if(filter) q.set("ability",filter);
+    const res=await fetch("api/gallery.php?"+q.toString());
+    if(!res.ok) throw new Error(res.status);
+    const j=await res.json();
+    const grid=document.getElementById("grid");
+    grid.insertAdjacentHTML("beforeend",(j.builds||[]).map(card).join(""));
+    st.innerHTML = j.more
+      ? `<button class="more" onclick="page++;load()">Load more</button>`
+      : (grid.children.length?``:`<div class="empty"><b>Nothing here yet.</b><br>
+          Open the planner, build something, then use <b>Publish to gallery</b> to be the first.</div>`);
+  }catch(e){
+    st.innerHTML=`<div class="note bad">Couldn't load the gallery. It may not be set up on this
+      server yet — the <a href="/">planner</a> works regardless.</div>`;
+  }finally{ loading=false; }
+}
+
+async function vote(id,btn){
+  btn.disabled=true;
+  try{
+    const res=await fetch("api/gallery.php",{method:"POST",
+      headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"vote",id})});
+    if(!res.ok) throw new Error(res.status);
+    const j=await res.json();
+    btn.querySelector("span").textContent=j.votes|0;
+    btn.setAttribute("aria-pressed", j.voted?"true":"false");
+  }catch(e){ /* leave the button as it was */ }
+  finally{ btn.disabled=false; }
+}
+
+document.getElementById("disc").innerHTML=
+  `<b>This project is an independent creation and is not affiliated with, endorsed, or sponsored by Soulbound.</b> `+
+  `View the official Fan Content Policy at `+
+  `<a href="https://soulbound.game/legal-portal/fan-content" rel="noopener">soulbound.game/legal-portal/fan-content</a>.`+
+  `<br><br>Builds here are submitted by players. If something needs removing, open an issue on the `+
+  `<a href="https://github.com/rages4calm/arcadia" rel="noopener">GitHub repo</a>.`;
+
+load();
+</script>
+</body>
+</html>

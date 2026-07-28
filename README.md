@@ -135,6 +135,24 @@ Nothing required. If you ever want to prune unused builds:
 DELETE FROM builds WHERE hits = 0 AND created_at < (NOW() - INTERVAL 90 DAY);
 ```
 
+## Build gallery (optional)
+
+`gallery.html` lists builds players have published, sorted by votes or recency and filterable by
+ability. Voting needs no account — it's one vote per address, stored as a salted hash.
+
+Builds are **private by default**: sharing a link stores a build but does not list it. Publishing
+is a separate, deliberate step in the planner.
+
+To enable it, run `schema-gallery.sql` once in phpMyAdmin (after `schema.sql`) and upload
+`gallery.html` plus `api/gallery.php`. Add an `admin_token` to `api/config.php` if you want to be
+able to hide a build:
+
+```bash
+curl -X POST https://YOUR-DOMAIN/api/gallery.php   -H "Content-Type: application/json"   -d '{"action":"hide","id":"BUILDID","admin":"YOUR_TOKEN"}'
+```
+
+Without the backend the gallery page says so plainly and the planner is unaffected.
+
 ## Contributing
 
 The most useful contribution is **gear data**. The game has far more items than are documented

@@ -215,7 +215,23 @@
     <button class="btn" id="clearBtn" title="Clears your gear, abilities and saved data">Reset</button>
     <button class="btn" id="exportBtn">Export</button>
     <button class="btn" id="importBtn">Import</button>
+    <button class="btn" id="pubBtn">Publish to gallery</button>
+    <a class="btn" href="gallery.html" style="text-decoration:none;display:inline-block">Browse gallery</a>
     <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+
+  <div id="pubPanel" hidden>
+    <div class="card" style="max-width:520px">
+      <h2>Publish to the gallery <span class="hint">anyone can see this</span></h2>
+      <input id="pubTitle" class="itemname-edit" maxlength="80" placeholder="Name your build — e.g. Heavy-hit Gleam Twins" aria-label="Build title">
+      <input id="pubAuthor" class="itemname-edit" maxlength="40" placeholder="Your name (optional)" aria-label="Your name" style="margin-top:7px">
+      <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn primary" id="pubGo">Publish</button>
+        <button class="btn" id="pubCancel">Cancel</button>
+      </div>
+      <div class="note" id="pubMsg">Your gear, abilities and a title get published. Nothing else — no
+        account, no email. You can ask for it to be removed at any time via the repo.</div>
+    </div>
   </div>
 
   <main id="main" class="grid">
@@ -1085,6 +1101,43 @@ function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]
 function clearSlot(sl){ S.gear[sl]=null; save(); }
 
 document.getElementById("shareBtn").onclick=shareLink;
+
+const pubPanel=document.getElementById("pubPanel");
+document.getElementById("pubBtn").onclick=()=>{
+  if(!equipped().length && !hasPrimaries()){ toast("Add some gear or abilities first"); return; }
+  pubPanel.hidden=false;
+  document.getElementById("pubTitle").focus();
+};
+document.getElementById("pubCancel").onclick=()=>{ pubPanel.hidden=true; };
+document.getElementById("pubGo").onclick=async()=>{
+  const title=document.getElementById("pubTitle").value.trim();
+  const author=document.getElementById("pubAuthor").value.trim();
+  const msg=document.getElementById("pubMsg");
+  if(title.length<3){ msg.className="note warn"; msg.textContent="Give it a name first (at least 3 characters)."; return; }
+  msg.className="note"; msg.textContent="Publishing…";
+  try{
+    const code=await encodeBuild();
+    // store the build to get an id, then flag that id as published
+    const r1=await fetch("api/build.php",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({p:code})});
+    if(!r1.ok) throw new Error("share");
+    const {id}=await r1.json();
+    const t=attrTotals();
+    const r2=await fetch("api/gallery.php",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"publish",id,title,author,
+        summary:{abilities:S.loadout.filter(Boolean),attrs:AKEYS.map(k=>t[k])}})});
+    if(!r2.ok){ const e=await r2.json().catch(()=>({})); throw new Error(e.error||"publish"); }
+    msg.className="note good";
+    msg.innerHTML=`Published. <a href="gallery.html" style="color:var(--acc2)">See it in the gallery</a> · `+
+                  `link: <code>${location.origin}/b/${id}</code>`;
+    toast("Published to the gallery");
+  }catch(e){
+    msg.className="note bad";
+    msg.textContent = String(e.message)==="share"
+      ? "Couldn't reach the server, so publishing isn't available right now. Sharing by link still works."
+      : "Couldn't publish: "+e.message;
+  }
+};
 document.getElementById("exampleBtn").onclick=()=>{ S=normalise(clone(EXAMPLE)); save(); };
 document.getElementById("clearBtn").onclick=()=>{
   S={loadout:["","","",""],gear:blankGear(),compare:{slot:"Chest",item:"",rolls:[]}};
