@@ -1,4 +1,4 @@
-# Soulbound Build Planner
+# Arcadia
 
 A free, open-source build planner and stat optimizer for **[Soulbound: Online](https://store.steampowered.com/app/4369490/Soulbound_Online/)**.
 
@@ -6,9 +6,9 @@ Enter your gear and abilities, and it tells you which of the six attributes actu
 *your* build, whether a piece of gear is an upgrade, and which abilities fit the stats you
 already have.
 
-**→ [Open the planner](https://soulbound.carl-prewitt.com/)**
+**→ [Open Arcadia](https://arcadia.carl-prewitt.com/)**
 
-![The planner with a build loaded](screenshots/planner-desktop.png)
+![Arcadia with a build loaded](screenshots/planner-desktop.png)
 
 ## What it does
 
@@ -37,14 +37,14 @@ already have.
 
 ## On mobile
 
-<img src="screenshots/planner-mobile.png" width="320" alt="The planner on a phone">
+<img src="screenshots/planner-mobile.png" width="320" alt="Arcadia on a phone">
 
 ## Running it
 
 It's one self-contained HTML file. No build step, no dependencies, no server.
 
 ```
-git clone https://github.com/rages4calm/soulbound-build-planner.git
+git clone https://github.com/rages4calm/arcadia.git
 ```
 
 Open `index.html` in a browser, or drop it on any static host. Your builds are stored in your
@@ -62,10 +62,15 @@ here, and the roll pools aren't published anywhere — so the library grows from
 
 ## Disclaimer
 
-A fan project. Not affiliated with, endorsed by, or associated with SpiderWare or
-Soulbound: Online. All game names and trademarks belong to their respective owners.
-Values are community-maintained approximations that can change with game updates — always
-trust your in-game stat panel over this tool.
+This project is an independent creation and is not affiliated with, endorsed, or sponsored by
+Soulbound. View the official Fan Content Policy at
+[soulbound.game/legal-portal/fan-content](https://soulbound.game/legal-portal/fan-content).
+
+Built in accordance with the
+[Third-Party Extensions & Plugins Policy](https://soulbound.game/legal-portal/third-party-extensions):
+it is free, uses no game art or assets, and claims no affiliation. All game names and trademarks
+belong to their respective owners. Values are community-maintained approximations that can change
+with game updates — always trust your in-game stat panel over this tool.
 
 ## License
 

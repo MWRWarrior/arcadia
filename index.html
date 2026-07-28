@@ -3,26 +3,26 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Soulbound Build Planner &amp; Stat Optimizer | Soulbound: Online</title>
-<meta name="description" content="Free build planner for Soulbound: Online. Find which of the six attributes — Power, Precision, Will, Ferocity, Vitality, Focus — actually scale your abilities, compare gear side by side, and share builds by link."/>
-<link rel="canonical" href="https://soulbound.carl-prewitt.com/"/>
+<title>Arcadia — Build Planner &amp; Stat Optimizer for Soulbound: Online</title>
+<meta name="description" content="Arcadia is a free build planner for Soulbound: Online. Find which of the six attributes — Power, Precision, Will, Ferocity, Vitality, Focus — actually scale your abilities, compare gear side by side, and share builds by link."/>
+<link rel="canonical" href="https://arcadia.carl-prewitt.com/"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
 <meta name="theme-color" content="#0b0e14"/>
 <meta name="color-scheme" content="dark"/>
 <meta property="og:type" content="website"/>
-<meta property="og:site_name" content="Soulbound Build Planner"/>
-<meta property="og:title" content="Soulbound Build Planner &amp; Stat Optimizer"/>
-<meta property="og:description" content="Work out which attributes actually scale your Soulbound abilities, compare gear, and share builds by link. Free, no account, runs in your browser."/>
-<meta property="og:url" content="https://soulbound.carl-prewitt.com/"/>
+<meta property="og:site_name" content="Arcadia"/>
+<meta property="og:title" content="Arcadia — Build Planner for Soulbound: Online"/>
+<meta property="og:description" content="Arcadia: work out which attributes actually scale your Soulbound abilities, compare gear, and share builds by link. Free, no account, runs in your browser."/>
+<meta property="og:url" content="https://arcadia.carl-prewitt.com/"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Soulbound Build Planner &amp; Stat Optimizer"/>
+<meta name="twitter:title" content="Arcadia — Build Planner for Soulbound: Online"/>
 <meta name="twitter:description" content="Which attributes actually scale your Soulbound abilities? Compare gear, plan builds, share by link."/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 32 32&#39;%3E%3Crect width=&#39;32&#39; height=&#39;32&#39; rx=&#39;7&#39; fill=&#39;%230b0e14&#39;/%3E%3Cpath d=&#39;M16 5l9 5v8c0 5-4 8-9 9-5-1-9-4-9-9v-8z&#39; fill=&#39;none&#39; stroke=&#39;%237b5cff&#39; stroke-width=&#39;2.5&#39;/%3E%3C/svg%3E"/>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
- {"@type":"WebApplication","name":"Soulbound Build Planner",
+ {"@type":"WebApplication","name":"Arcadia",
   "applicationCategory":"GameApplication","operatingSystem":"Any (web browser)",
-  "description":"Build planner and stat optimizer for the MMO Soulbound: Online. Calculates attribute totals, ranks which attributes scale your equipped abilities, compares gear, and shares builds by URL.",
+  "description":"Arcadia is a build planner and stat optimizer for the MMO Soulbound: Online. Calculates attribute totals, ranks which attributes scale your equipped abilities, compares gear, and shares builds by URL.",
   "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
   "isAccessibleForFree":true,
   "browserRequirements":"Requires JavaScript",
@@ -198,8 +198,8 @@
 <body>
 <a href="#main" class="sr-only">Skip to planner</a>
 <div class="wrap">
-  <header role="banner"><h1>Soulbound Build Planner</h1><span style="color:var(--faint);font-family:var(--mono);font-size:11.5px">stat optimizer &amp; ability matcher</span></header>
-  <div class="tagline">Enter your gear, pick your abilities, and see which attributes actually scale your build &mdash; plus which abilities best fit the stats you already have. A fan project for <b>Soulbound: Online</b>.</div>
+  <header role="banner"><h1>Arcadia</h1><span style="color:var(--faint);font-family:var(--mono);font-size:11.5px">build planner for Soulbound: Online</span></header>
+  <div class="tagline">Enter your gear, pick your abilities, and see which attributes actually scale your build &mdash; plus which abilities best fit the stats you already have. An independent fan project for <b>Soulbound: Online</b>.</div>
 
   <div class="toolbar">
     <button class="btn primary" id="shareBtn">🔗 Copy share link</button>
@@ -830,12 +830,19 @@ function rollRow(sl,i,r){
     <button onclick="delRoll('${sl}',${i})">✕</button></div>`;
 }
 function renderDisc(){
+  // Wording required verbatim by the Soulbound Third-Party Extensions Policy.
   document.getElementById("disc").innerHTML=
-    `<b>Soulbound Build Planner</b> — a free fan-made tool. Not affiliated with, endorsed by, or associated with SpiderWare or Soulbound: Online. `+
-    `All game names and trademarks belong to their respective owners. Values are community-maintained approximations that can change with game updates — `+
-    `always trust your in-game stat panel over this tool. Builds are saved in your own browser as you edit (never uploaded) — press <b>Reset</b> to clear them; share links encode the build in the URL itself.`+
-    `<br><br>Open source — <a href="https://github.com/rages4calm/soulbound-build-planner" rel="noopener">view or contribute on GitHub</a>. Spotted a wrong number, or an item that's missing? Open an issue.`;
+    `<b>This project is an independent creation and is not affiliated with, endorsed, or sponsored by Soulbound.</b> `+
+    `View the official Fan Content Policy at `+
+    `<a href="https://soulbound.game/legal-portal/fan-content" rel="noopener">soulbound.game/legal-portal/fan-content</a>.`+
+    `<br><br>All game names and trademarks belong to their respective owners. Values are community-maintained `+
+    `approximations that can change with game updates — always trust your in-game stat panel over this tool. `+
+    `Builds are saved in your own browser as you edit (never uploaded) — press <b>Reset</b> to clear them; `+
+    `share links encode the build in the URL itself.`+
+    `<br><br>Open source — <a href="https://github.com/rages4calm/arcadia" rel="noopener">view or contribute on GitHub</a>. `+
+    `Spotted a wrong number, or an item that's missing? Open an issue.`;
 }
+
 
 /* ═══════════ EDIT OPS ═══════════ */
 const gearOf=sl=> sl==="__cmp" ? (S.compare||(S.compare={slot:"Chest",item:"",rolls:[]})) : S.gear[sl];
@@ -904,7 +911,7 @@ document.getElementById("clearBtn").onclick=()=>{
   render(); toast("Reset — nothing saved in this browser");
 };
 document.getElementById("exportBtn").onclick=()=>{ const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="soulbound-build.json"; a.click(); };
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="arcadia-build.json"; a.click(); };
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=e=>{const f=e.target.files[0]; if(!f)return;
   const rd=new FileReader(); rd.onload=()=>{ try{const d=JSON.parse(rd.result);
