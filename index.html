@@ -427,7 +427,14 @@ const EXAMPLE={
 
 /* ═══════════ STATE + SHARE LINKS ═══════════ */
 const LS="sb_planner_v3";
-let S = fromHash() || loadState();
+let S = fromHash() || loadState();   // legacy links + stored build, synchronous
+// A compressed link can't be read synchronously, so decode it after first paint.
+(async()=>{
+  const raw=location.hash.replace(/^#b=/,"");
+  if(!raw || raw===location.hash || !raw.startsWith("c.")) return;
+  const d=await decodeBuildAsync(raw);
+  if(d){ S=normalise(d); persist(); render(); }
+})();
 
 function loadState(){
   try{ const d=JSON.parse(localStorage.getItem(LS)); if(d&&d.gear) return normalise(d); }catch(e){}
@@ -449,22 +456,41 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 // Compact share encoding: indices instead of names keeps links short.
 const ALLSTATS=AKEYS.concat(SECKEYS);
-function encodeBuild(){
-  const c={
+function buildPayload(){
+  return {
     l:S.loadout.map(id=>{const i=ABILITIES.findIndex(a=>a.id===id); return i<0?-1:i;}),
     g:SLOTS.map(sl=>{
       const g=S.gear[sl]; if(!g) return 0;
       return [g.item||"", g.lv||0, (g.rolls||[]).map(r=>[ALLSTATS.indexOf(r.s), r.p?1:0, r.v, r.t?TAG_KEYS.indexOf(r.t)+1:0])];
     })};
-  const bytes=new TextEncoder().encode(JSON.stringify(c));
-  let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b));
-  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
-function decodeBuild(str){
+const b64url = bytes => { let s=""; bytes.forEach(b=>s+=String.fromCharCode(b));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
+const unb64url = str => { const b=atob(str.replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(b,c=>c.charCodeAt(0)); };
+
+// Plain base64 of the JSON. Kept as-is so links shared before compression existed
+// keep working forever.
+function encodeBuildPlain(){
+  return b64url(new TextEncoder().encode(JSON.stringify(buildPayload())));
+}
+// Compressed form, ~half the length. Marked with a "c." prefix; the legacy form
+// always begins with base64 of '{"' so the two can never be confused.
+async function encodeBuild(){
+  const bytes=new TextEncoder().encode(JSON.stringify(buildPayload()));
+  if(typeof CompressionStream==="function"){
+    try{
+      const cs=new CompressionStream("deflate-raw");
+      const w=cs.writable.getWriter(); w.write(bytes); w.close();
+      const out=new Uint8Array(await new Response(cs.readable).arrayBuffer());
+      if(out.length) return "c."+b64url(out);
+    }catch(e){ /* fall through to the uncompressed form */ }
+  }
+  return b64url(bytes);
+}
+function decodeFromJSON(json){
   try{
-    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
-    const bin=atob(b64); const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
-    const c=JSON.parse(new TextDecoder().decode(bytes));
+    const c=(typeof json==="string")?JSON.parse(json):json;
     const out={loadout:(c.l||[]).map(i=>ABILITIES[i]?ABILITIES[i].id:""), gear:blankGear()};
     (c.g||[]).forEach((e,i)=>{
       const sl=SLOTS[i]; if(!sl||!e) return;
@@ -476,20 +502,49 @@ function decodeBuild(str){
     return normalise(out);
   }catch(e){ return null; }
 }
+// Legacy links decode synchronously (no flash of default state); compressed
+// links need async inflate.
+function decodeBuild(str){
+  try{ return decodeFromJSON(new TextDecoder().decode(unb64url(str))); }
+  catch(e){ return null; }
+}
+async function decodeBuildAsync(str){
+  if(!str) return null;
+  if(str.startsWith("c.")){
+    if(typeof DecompressionStream!=="function") return null;
+    try{
+      const ds=new DecompressionStream("deflate-raw");
+      const w=ds.writable.getWriter(); w.write(unb64url(str.slice(2))); w.close();
+      const out=new Uint8Array(await new Response(ds.readable).arrayBuffer());
+      return decodeFromJSON(new TextDecoder().decode(out));
+    }catch(e){ return null; }
+  }
+  return decodeBuild(str);
+}
 function fromHash(){
   const h=location.hash.replace(/^#b=/,'');
   if(!h || h===location.hash) return null;
   return decodeBuild(h);
 }
-function shareLink(){
-  const url=location.origin+location.pathname+"#b="+encodeBuild();
-  navigator.clipboard.writeText(url).then(
-    ()=>toast("Share link copied — paste it anywhere"),
-    ()=>{ history.replaceState(null,"","#b="+encodeBuild()); toast("Link is in your address bar — copy it"); });
+async function shareLink(){
+  const code=await encodeBuild();
+  const url=location.origin+location.pathname+"#b="+code;
+  try{
+    await navigator.clipboard.writeText(url);
+    toast(`Share link copied (${url.length} chars)`);
+  }catch(e){
+    history.replaceState(null,"","#b="+code);
+    toast("Link is in your address bar — copy it");
+  }
 }
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),2600); }
-window.addEventListener("hashchange",()=>{ const d=fromHash(); if(d){ S=d; save(); toast("Loaded build from link"); }});
+window.addEventListener("hashchange",async()=>{
+  const raw=location.hash.replace(/^#b=/,"");
+  if(!raw||raw===location.hash) return;
+  const d=await decodeBuildAsync(raw);
+  if(d){ S=normalise(d); save(); toast("Loaded build from link"); }
+});
 
 /* ═══════════ COMPUTE ═══════════ */
 function attrTotals(){
