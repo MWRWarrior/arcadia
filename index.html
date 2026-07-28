@@ -117,6 +117,14 @@
   .addbtn{background:#12203a;color:#8fb6ff;border-color:#26406b;margin:6px 5px 0 0}
   .rollrow button{background:#241722;color:#e08596;border-color:#3a2330;padding:4px 8px;border-radius:6px;cursor:pointer;border:1px solid #3a2330}
   .itemname-edit{width:100%;font-family:var(--sans)}
+  .qa{margin-bottom:8px;border:1px solid var(--edge);border-radius:8px;background:#0d1220}
+  .qa summary{cursor:pointer;font-size:11.5px;color:var(--def);padding:6px 9px;list-style:none}
+  .qa summary::-webkit-details-marker{display:none}
+  .qa summary:before{content:"+ ";font-family:var(--mono)}
+  .qa[open] summary{border-bottom:1px solid var(--edge)}
+  .qabox{width:calc(100% - 18px);margin:8px 9px 0;background:#0b0f18;border:1px solid var(--edge);
+    color:var(--ink);border-radius:6px;padding:7px;font-family:var(--mono);font-size:12px;resize:vertical}
+  .qa .addbtn{margin:6px 9px 9px}
   .nameRow{display:flex;gap:6px;margin-bottom:7px} .nameRow input.lv{width:78px}
   .toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px;align-items:center}
   .lo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:7px}
@@ -794,6 +802,82 @@ function renderRules(){
     `Roughly, armour scales as <code>Vitality ≈ 0.62 × iLvl</code> and <code>each offensive ≈ 0.19 × iLvl</code>. `+
     `Your weapon equips to <b>Arms</b> — there is no separate weapon slot.`;
 }
+
+/* ---- quick entry: type or paste tooltip lines instead of using dropdowns ----
+   OCR on the game's pixel font was tested and misread ~half the digits while
+   still producing plausible output, so the user supplies the characters. */
+const STAT_ALIASES = (()=>{
+  const m={};
+  AKEYS.forEach(k=>{ m[k]=k; });
+  m.pow="power"; m.prec="precision"; m.fero="ferocity"; m.vit="vitality"; m.foc="focus";
+  Object.entries(SEC).forEach(([k,label])=>{
+    const clean=label.toLowerCase().replace(/\s*%$/,"").replace(/[()]/g,"").trim();
+    m[clean]=k;
+  });
+  Object.assign(m,{
+    "crit damage":"critical_strike_damage", "crit dmg":"critical_strike_damage", csd:"critical_strike_damage",
+    "crit chance":"critical_strike_chance", csc:"critical_strike_chance",
+    "critical strike damage":"critical_strike_damage", "critical strike chance":"critical_strike_chance",
+    "heavy hit chance":"heavy_hit_chance", hhc:"heavy_hit_chance",
+    "heavy hit damage":"heavy_hit_damage", hhd:"heavy_hit_damage",
+    "attack speed":"attack_speed", "atk speed":"attack_speed", as:"attack_speed",
+    "cooldown reduction":"cooldown_reduction", cdr:"cooldown_reduction", cooldown:"cooldown_reduction",
+    "healing power":"healing_power", "healing pwr":"healing_power",
+    "shielding power":"shielding_power", "shield pwr":"shielding_power",
+    "health regeneration":"health_regen", "health regen":"health_regen", "hp regen":"health_regen",
+    "max health":"health", "max hp":"health", hp:"health",
+    "aoe radius":"aoe_radius", aoe:"aoe_radius",
+    "dot potency":"dot_potency", "physical damage":"physical_damage", "physical dmg":"physical_damage",
+    "void damage":"void_damage", "void dmg":"void_damage", "fire damage":"fire_damage",
+    "cold damage":"cold_damage", "lightning damage":"lightning_damage",
+    "poison damage":"poison_damage", "explosive damage":"explosive_damage",
+    "ethereal damage":"ethereal_damage", "dodge chance":"dodge_chance", dodge:"dodge_chance",
+    "defense rating":"damage_reduction", defense:"damage_reduction",
+    "stun resistance":"stun_resistance", "shots per tick":"shots_per_tick",
+    "extra projectiles":"projectile_count", "additional projectile":"projectile_count",
+  });
+  return m;
+})();
+
+// "+8.80% Attack Speed", "[Gun] +24% Attack Speed", "29 vit", "+13 Power"
+function parseRollLine(line){
+  let s=line.trim(); if(!s) return null;
+  let tag=null;
+  const tm=s.match(/^\[([A-Za-z ]+)\]\s*/);
+  if(tm){
+    const key=tm[1].toLowerCase().replace(/\s+/g,"");
+    const found=TAG_KEYS.find(k=>k===key || TAG_NAME[k].toLowerCase().replace(/\s+/g,"")===key);
+    if(found) tag=found;
+    s=s.slice(tm[0].length);
+  }
+  // number may lead ("+29 Vitality") or trail ("Vitality 29")
+  let m=s.match(/^([+\-]?\d+(?:\.\d+)?)\s*(%?)\s*(.+)$/);
+  if(!m) m=(()=>{ const t=s.match(/^(.+?)\s+([+\-]?\d+(?:\.\d+)?)\s*(%?)$/);
+                  return t?[null,t[2],t[3],t[1]]:null; })();
+  if(!m) return null;
+  const value=parseFloat(m[1]); if(isNaN(value)) return null;
+  let name=m[3].toLowerCase().replace(/[^a-z% ]/g,"").replace(/\s+/g," ").trim()
+              .replace(/\s*%$/,"");
+  const stat=STAT_ALIASES[name];
+  if(!stat) return null;
+  const isAttr=AKEYS.includes(stat);
+  const roll={s:stat,p:isAttr?1:0,v:value};
+  if(!isAttr && tag) roll.t=tag;
+  return roll;
+}
+function quickAdd(slot){
+  const box=document.getElementById("qa_"+slot.replace(/\s/g,"_"));
+  const text=(box?box.value:"")||"";
+  const lines=text.split(/[\n;,]/).map(x=>x.trim()).filter(Boolean);
+  const rolls=[],bad=[];
+  lines.forEach(l=>{ const r=parseRollLine(l); if(r) rolls.push(r); else bad.push(l); });
+  if(!rolls.length){ toast("Couldn't read any rolls — check the format"); return; }
+  if(!S.gear[slot]) S.gear[slot]={item:"New item",rolls:[]};
+  S.gear[slot].rolls=S.gear[slot].rolls.concat(rolls);
+  save();
+  toast(bad.length ? `Added ${rolls.length}, skipped ${bad.length}` : `Added ${rolls.length} rolls`);
+}
+
 function renderGear(){
   document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
     const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
@@ -807,6 +891,11 @@ function renderGear(){
           <option value="">— load a documented ${sl} item (${lib.length}) —</option>
           ${lib.map((x,i)=>`<option value="${i}">${x.rarity?x.rarity[0].toUpperCase()+x.rarity.slice(1)+" · ":""}${x.name}${x.lvl?` (iL${x.lvl})`:""}</option>`).join("")}
         </select>`:""})()}
+        <details class="qa"><summary>Quick add — paste tooltip lines</summary>
+          <textarea id="qa_${sl.replace(/\s/g,'_')}" class="qabox" rows="4"
+            placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed"></textarea>
+          <button class="addbtn" onclick="quickAdd('${sl}')">Add these rolls</button>
+        </details>
         <div class="nameRow">
           <input class="itemname-edit" placeholder="Item name" aria-label="Item name for ${sl}" value="${g?esc(g.item):''}" oninput="setName('${sl}',this.value)">
           ${ACCESSORY.has(sl)||!e?'':`<span class="lvbadge" title="item level = sum of primary attribute points">iLvl ${e.level}</span>`}
