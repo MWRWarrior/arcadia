@@ -284,6 +284,10 @@
         <div id="tagged"></div>
       </div>
       <div class="card">
+        <h2>Legendary hidden effects <span class="hint">not shown in-game</span></h2>
+        <div id="procs"></div>
+      </div>
+      <div class="card">
         <h2>Ability match <span class="hint">how well each ability fits your stats</span></h2>
         <div id="abilrank"></div>
         <div class="note" id="abilNote"></div>
@@ -399,6 +403,25 @@ const GEAR_LIB = [
   {"slot":"Ring 1","name":"Kusarigama Ring","rarity":"epic","lvl":0,"rolls":[{"s":"physical_damage","p":0,"v":24.0},{"s":"heavy_hit_chance","p":0,"v":8.0},{"s":"attack_speed","p":0,"v":2.65},{"s":"cooldown_reduction","p":0,"v":1.25}]},
   {"slot":"Ring 1","name":"Ring of Avoidance","rarity":"epic","lvl":0,"rolls":[{"s":"dodge_chance","p":0,"v":10.0},{"s":"cooldown_reduction","p":0,"v":16.0},{"s":"shielding_power","p":0,"v":24.0},{"s":"healing_power","p":0,"v":10.5},{"s":"critical_strike_chance","p":0,"v":2.65}]},
   {"slot":"Ring 1","name":"Ring of Intimidation","rarity":"legendary","lvl":0,"rolls":[{"s":"threat","p":0,"v":1000.0},{"s":"health","p":0,"v":44.0},{"s":"health_regen","p":0,"v":6.0},{"s":"critical_strike_damage","p":0,"v":13.5},{"s":"attack_speed","p":0,"v":3.35},{"s":"cooldown_reduction","p":0,"v":1.75}]},
+];
+
+/* Legendary hidden effects observed on real items. The in-game tooltip shows at
+   most a bare [Tag] line for these, so this is the only place they're written down.
+   Keyed by the item's internal name pattern — tier + slot + region — because that's
+   what identifies the effect, e.g. any t4 Neotilus chest carries the gun-crit proc.
+   CHANCES ARE PRE-HOTFIX-4: that patch corrected legendaries that could reach 100%,
+   so treat every 100% below as "it procs", not as a rate. */
+const PROCS=[
+ {pat:"t4 chest Neotilus",  trigger:"on crit",      effect:"Power buff to gun abilities",        scope:"gun",       chance:100},
+ {pat:"t4 staff Lunar",     trigger:"on crit",      effect:"Power buff to void abilities",       scope:"void",      chance:100},
+ {pat:"t5 chest Neotilus",  trigger:"on crit",      effect:"Drone buff",                          scope:"explosive", chance:10},
+ {pat:"t4 heavy Neotilus",  trigger:"on heavy hit", effect:"Cooldown reduction",                  scope:"",          chance:100},
+ {pat:"t5 feet Virelda",    trigger:"on heavy hit", effect:"Cooldown reduction",                  scope:"",          chance:100},
+ {pat:"t5 head Foundation", trigger:"on heavy hit", effect:"Knockback buff",                      scope:"",          chance:100},
+ {pat:"t4 chest Virelda",   trigger:"on enemy hit", effect:"Fire burn DEBUFF on the enemy",       scope:"physical",  chance:100},
+ {pat:"t5 head Virelda",    trigger:"on enemy hit", effect:"Fire burn DEBUFF on the enemy",       scope:"physical",  chance:100},
+ {pat:"t4 feet Virelda",    trigger:"on enemy hit", effect:"Chill DEBUFF on the enemy",           scope:"melee",     chance:100},
+ {pat:"t3 staff Lunar",     trigger:"on enemy kill",effect:"Power buff to fire abilities",        scope:"fire",      chance:100},
 ];
 
 const SEC = {
@@ -632,7 +655,7 @@ function itemBudget(sl){
 
 /* ═══════════ RENDER ═══════════ */
 function render(){ renderLoadout();renderGear();renderAttrs();renderPriority();
-  renderAdvice();renderTagged();renderAbilRank();renderCompare();renderRules();renderDisc(); }
+  renderAdvice();renderTagged();renderProcs();renderAbilRank();renderCompare();renderRules();renderDisc(); }
 
 
 /* ---- item comparison: swap a candidate into one slot and diff everything ---- */
@@ -867,6 +890,32 @@ function renderAdvice(){
 function hasPrimaries(){
   return SLOTS.some(sl=>S.gear[sl] && (S.gear[sl].rolls||[]).some(r=>r.p&&AKEYS.includes(r.s)&&(+r.v||0)>0));
 }
+function renderProcs(){
+  const eq=equipped();
+  const rows=PROCS.map(p=>{
+    const hits=p.scope?ABILITIES.filter(a=>fxMatches(p.scope,a)):ABILITIES;
+    const mine=p.scope?eq.filter(a=>fxMatches(p.scope,a)):eq;
+    const relevant=!p.scope||mine.length>0;
+    return `<div class="arow ${relevant&&eq.length?'eq':''}">
+      <span class="nm">${esc(p.pat)}</span>
+      <span class="ty">${esc(p.trigger)}</span>
+      <span class="by">${p.scope?'['+fxLabel(p.scope)+']':'any build'}</span>
+      </div>
+      <div class="fx" style="margin:-2px 0 6px 8px">${esc(p.effect)}
+        ${p.scope&&eq.length?(mine.length
+            ?`· <span style="color:var(--good)">applies to ${mine.map(a=>a.name).join(", ")}</span>`
+            :`· <span style="color:var(--faint)">nothing you run carries [${fxLabel(p.scope)}]</span>`):``}</div>`;
+  }).join("");
+  document.getElementById("procs").innerHTML = rows +
+   `<div class="note warn">Legendaries carry a triggered effect the tooltip barely hints at — usually
+    just a bare <code>[Tag]</code> line with no explanation. These were read off real items and are
+    matched by <b>tier + slot + region</b> in the item's name, so any t4 Neotilus chest carries the
+    gun-crit proc. <b>Trigger rates are pre-Hotfix-4</b> — that patch corrected legendaries that
+    could reach 100%, so read every 100% as "it procs", not as a rate.
+    The four triggers are <b>on crit</b>, <b>on heavy hit</b>, <b>on enemy hit</b> and
+    <b>on enemy kill</b>; heavy-hit ones have no scope, so they work in any build.</div>`;
+}
+
 function renderAbilRank(){
   const t=attrTotals(),eq=S.loadout.filter(Boolean);
   // With no gear every attribute sits at the base of 1, so all abilities tie and any
