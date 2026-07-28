@@ -348,7 +348,7 @@ function tagScope(tag){ return ABILITIES.filter(a=>tagMatches(tag,a)); }
 
 const GEAR_LIB = [
   {"slot":"Arms","name":"Encoded Staff","rarity":"uncommon","lvl":22,"rolls":[{"s":"will","p":1,"v":7},{"s":"precision","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"shielding_power","p":0,"v":21.0}]},
-  {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"fx":{"trigger":"on enemy kill","chance":100,"scope":"fire","effect":"Power buff to your fire abilities"},"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
+  {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"fx":{"trigger":"on enemy kill","scope":"fire","effect":"Power buff to your fire abilities"},"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
   {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":30.0},{"s":"attack_speed","p":0,"v":7.2}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
   {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"dot_potency","p":0,"v":37.0},{"s":"heavy_hit_chance","p":0,"v":9.0},{"s":"link_count","p":0,"v":-100.0}]},
@@ -358,7 +358,7 @@ const GEAR_LIB = [
   {"slot":"Belt","name":"Glacial Girdle","rarity":"legendary","lvl":0,"rolls":[{"s":"cold_damage","p":0,"v":15.0},{"s":"cooldown_reduction","p":0,"v":1.75},{"s":"aoe_radius","p":0,"v":4.05}]},
   {"slot":"Chest","name":"Ferrox Plate Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"precision","p":1,"v":9},{"s":"will","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":26.0},{"s":"attack_speed","p":0,"v":6.6},{"s":"physical_damage","p":0,"v":6.6}]},
   {"slot":"Chest","name":"Voltscale Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"attack_speed","p":0,"v":6.3},{"s":"physical_damage","p":0,"v":6.3},{"s":"heavy_hit_chance","p":0,"v":6.3}]},
-  {"slot":"Chest","name":"Legendary chest (iL64)","rarity":"legendary","lvl":64,"fx":{"trigger":"on crit","chance":100,"scope":"gun","effect":"Power buff to your gun abilities — Gleam Twins, Minigun and Machinegun"},"rolls":[{"s":"vitality","p":1,"v":40},{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"critical_strike_chance","p":0,"v":7.2},{"s":"critical_strike_damage","p":0,"v":31}]},
+  {"slot":"Chest","name":"Legendary chest (iL64)","rarity":"legendary","lvl":64,"fx":{"trigger":"on crit","scope":"gun","effect":"Power buff to your gun abilities — Gleam Twins, Minigun and Machinegun"},"rolls":[{"s":"vitality","p":1,"v":40},{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"critical_strike_chance","p":0,"v":7.2},{"s":"critical_strike_damage","p":0,"v":31}]},
   {"slot":"Chest","name":"Necrotic Warrior Plate","rarity":"legendary","lvl":91,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58},{"s":"critical_strike_damage","p":0,"v":41.0},{"s":"attack_speed","p":0,"v":8.5}]},
   {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
   {"slot":"Head","name":"Encoded Helm","rarity":"rare","lvl":28,"rolls":[{"s":"vitality","p":1,"v":14},{"s":"precision","p":1,"v":7},{"s":"will","p":1,"v":7},{"s":"attack_speed","p":0,"v":5.5},{"s":"physical_damage","p":0,"v":5.5},{"s":"knockback","p":0,"v":22.0}]},
@@ -544,6 +544,10 @@ function renderCompare(){
   document.getElementById("cmpSlot").innerHTML=
     SLOTS.map(s=>`<option value="${s}" ${s===C.slot?'selected':''}>${s}</option>`).join("");
   const lib=libFor(C.slot);
+  const staleNote = ACCESSORY.has(C.slot)
+    ? `<div class="note warn">A recent patch adjusted accessory secondary stats. Documented
+       ring / neck / belt values here may be out of date &mdash; trust your own tooltip over this
+       library for those slots.</div>` : "";
   document.getElementById("cmpLib").innerHTML =
     `<option value="">${lib.length?`load a documented ${C.slot} item (${lib.length})`:`no documented items for ${C.slot} yet`}</option>`
     + lib.map((g,i)=>`<option value="${i}">${g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":""}${g.name}${g.lvl?` (iL${g.lvl})`:""}</option>`).join("");
@@ -552,7 +556,7 @@ function renderCompare(){
   document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>rollRow("__cmp",i,r)).join("");
 
   const out=document.getElementById("cmpOut");
-  if(!(C.rolls||[]).length){ out.innerHTML=
+  if(!(C.rolls||[]).length){ out.innerHTML=staleNote+
     `<div class="note">Pick a documented item above, or type a candidate's rolls in, to see whether it beats
       your current <b>${C.slot}</b>. It diffs your attributes, your secondaries and every equipped ability's usable points.
       <br><br><b>${GEAR_LIB.length} items documented so far</b> — a sample gathered from real tooltips, not the full game.
@@ -594,7 +598,7 @@ function renderCompare(){
     msg=`<b>${netAbil===0?'Even on attributes':'Net loss ('+netAbil+' points)'}</b> — ${better} abilities gain, ${worse} lose. Judge it on the secondary stats below.`; }
 
   const candFx=fxHtml(fxFor(C.item));
-  out.innerHTML = candFx+
+  out.innerHTML = staleNote+candFx+
     (arows.length?`<div class="dl"><div class="h">Attribute</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">with candidate</div>${arows.join("")}</div>`:"")
    +(abr.length?`<div class="dl" style="margin-top:12px"><div class="h">Ability usable points</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${abr.join("")}</div>`:"")
    +(srows.length?`<div class="note" style="margin-top:12px;font-size:11.5px">Secondary rolls are shown as simple sums. Most stack additively, but a few combine as <code>(flat + attribute) &times; (1 + percent)</code> &mdash; Dot Potency is the confirmed case, which is why it has separate flat and % entries. Trust your in-game panel for the final figure.</div><div class="dl" style="margin-top:12px"><div class="h">Secondary</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${srows.join("")}</div>`:"")
@@ -865,8 +869,9 @@ function fxHtml(fx){
   const yours=equipped().filter(a=>fxMatches(fx.scope,a)).map(a=>a.name);
   return `<div class="fxbox">
     <span class="fxtag">hidden effect</span>
-    <b>${fx.trigger}</b>${fx.chance?` · ${fx.chance}%`:""} → ${esc(fx.effect)}
-    <div class="fxwho">Scoped to <code>[${fxLabel(fx.scope)}]</code> — applies to ${hits.join(", ")||"—"}.
+    <b>${fx.trigger}</b> → ${esc(fx.effect)}
+    <div class="fxwho">Trigger rate isn't shown in-game and changes with patches — treat this as
+      "it has a proc", not a rate. Scoped to <code>[${fxLabel(fx.scope)}]</code> — applies to ${hits.join(", ")||"—"}.
       ${yours.length?`You run <b>${yours.join(", ")}</b>, so you get it.`
                     :`<span style="color:var(--warn)">Nothing you have equipped matches, so this does nothing for your current loadout.</span>`}</div>
   </div>`;
