@@ -6,6 +6,13 @@
 RewriteEngine On
 RewriteRule ^b/([A-Za-z0-9]{4,12})/?$ /index.html [L]
 
+# Belt and braces: this host happens to block dotfiles already, but don't rely
+# on a host default to keep the repository metadata off the web.
+RedirectMatch 404 /\.git(/|$)
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
 # Never expose database credentials, even if PHP is misconfigured.
 <FilesMatch "^config\.php$">
   Require all denied
