@@ -144,12 +144,12 @@ Builds are **private by default**: sharing a link stores a build but does not li
 is a separate, deliberate step in the planner.
 
 To enable it, run `schema-gallery.sql` once in phpMyAdmin (after `schema.sql`) and upload
-`gallery.html` plus `api/gallery.php`. Add an `admin_token` to `api/config.php` if you want to be
-able to hide a build:
+`gallery.html` plus `api/gallery.php`.
 
-```bash
-curl -X POST https://YOUR-DOMAIN/api/gallery.php   -H "Content-Type: application/json"   -d '{"action":"hide","id":"BUILDID","admin":"YOUR_TOKEN"}'
-```
+**Moderation.** Put a long random string in `api/config.php` as `admin_token`, then open the
+gallery, expand **Moderation** at the bottom, and paste it in. A **Hide this build** button appears
+on every card. The token is stored in your browser only, and the box is collapsed and unlabelled
+enough that ordinary visitors won't think about it.
 
 Without the backend the gallery page says so plainly and the planner is unaffected.
 

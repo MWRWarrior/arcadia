@@ -68,6 +68,18 @@
     border-radius:6px;padding:8px 16px;cursor:pointer;font:inherit}
   .disc{color:var(--faint);font-size:11px;margin-top:28px;border-top:1px solid var(--edge);padding-top:14px;line-height:1.7}
   .disc a{color:var(--acc2)}
+  .admin{margin-top:22px;border:1px solid var(--edge);border-radius:8px;background:#0d1220;padding:0 12px}
+  .admin summary{cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--faint);padding:9px 0;list-style:none}
+  .admin summary::-webkit-details-marker{display:none}
+  .admin summary:before{content:"▸ "}
+  .admin[open] summary:before{content:"▾ "}
+  .admin p{font-size:12.5px;color:var(--dim);margin:0 0 8px}
+  .adminrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+  .adminrow input{background:#0b0f18;border:1px solid var(--edge);color:var(--ink);border-radius:6px;
+    padding:6px 8px;font-family:var(--mono);font-size:12px;flex:1;min-width:180px}
+  .hide{background:#241722;border:1px solid #3a2330;color:#e08596;border-radius:6px;
+    padding:5px 9px;cursor:pointer;font:inherit;font-size:12px}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   @media (max-width:560px){ .wrap{padding:14px 12px 60px} .grid{grid-template-columns:1fr} select{max-width:none;flex:1} }
 </style>
@@ -90,6 +102,17 @@
 
   <main id="main"><div class="grid" id="grid"></div></main>
   <div id="status"></div>
+  <details class="admin">
+    <summary>Moderation</summary>
+    <p>Paste your admin token to get a <b>Hide</b> button on each build. It's kept in this
+       browser only and never shown to anyone else.</p>
+    <div class="adminrow">
+      <input id="adminTok" type="password" placeholder="admin token" aria-label="Admin token" autocomplete="off">
+      <button class="tab" id="adminSave">Enable</button>
+      <button class="tab" id="adminClear">Forget</button>
+    </div>
+    <div id="adminMsg" class="by"></div>
+  </details>
   <footer class="disc" id="disc"></footer>
 </div>
 
@@ -110,6 +133,7 @@ const abilName=id=>(ABILITIES.find(a=>a.id===id)||{}).name||id;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 let sort="top", filter="", page=0, loading=false;
+let adminTok = localStorage.getItem("arcadia_admin") || "";
 
 document.getElementById("filter").innerHTML =
   `<option value="">every ability</option>`+
@@ -139,7 +163,9 @@ function card(b){
         ▲ <span>${b.votes|0}</span></button>
       <span class="hits">${b.hits|0} opened</span>
       <a class="open" href="/b/${esc(b.id)}">Open in planner</a>
-    </div></article>`;
+    </div>
+    ${adminTok?`<div style="margin-top:6px"><button class="hide" onclick="hideBuild('${esc(b.id)}',this)">Hide this build</button></div>`:``}
+    </article>`;
 }
 
 async function load(){
@@ -149,7 +175,7 @@ async function load(){
   try{
     const q=new URLSearchParams({sort,page:String(page)});
     if(filter) q.set("ability",filter);
-    const res=await fetch("api/gallery.php?"+q.toString());
+    const res=await fetch("/api/gallery.php?"+q.toString());
     if(!res.ok) throw new Error(res.status);
     const j=await res.json();
     const grid=document.getElementById("grid");
@@ -167,7 +193,7 @@ async function load(){
 async function vote(id,btn){
   btn.disabled=true;
   try{
-    const res=await fetch("api/gallery.php",{method:"POST",
+    const res=await fetch("/api/gallery.php",{method:"POST",
       headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"vote",id})});
     if(!res.ok) throw new Error(res.status);
     const j=await res.json();
@@ -175,6 +201,33 @@ async function vote(id,btn){
     btn.setAttribute("aria-pressed", j.voted?"true":"false");
   }catch(e){ /* leave the button as it was */ }
   finally{ btn.disabled=false; }
+}
+
+document.getElementById("adminSave").onclick=()=>{
+  adminTok=document.getElementById("adminTok").value.trim();
+  localStorage.setItem("arcadia_admin",adminTok);
+  document.getElementById("adminMsg").textContent = adminTok
+    ? "Enabled — Hide buttons will appear on each build." : "No token entered.";
+  page=0; document.getElementById("grid").innerHTML=""; load();
+};
+document.getElementById("adminClear").onclick=()=>{
+  adminTok=""; localStorage.removeItem("arcadia_admin");
+  document.getElementById("adminTok").value="";
+  document.getElementById("adminMsg").textContent="Forgotten.";
+  page=0; document.getElementById("grid").innerHTML=""; load();
+};
+if(adminTok) document.getElementById("adminMsg").textContent="Admin mode is on in this browser.";
+
+async function hideBuild(id,btn){
+  if(!confirm("Hide this build from the gallery?")) return;
+  btn.disabled=true; btn.textContent="Hiding…";
+  try{
+    const res=await fetch("/api/gallery.php",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"hide",id,admin:adminTok})});
+    if(!res.ok) throw new Error(res.status===403?"token rejected":"failed");
+    btn.closest(".card").style.display="none";
+  }catch(e){ btn.disabled=false; btn.textContent="Hide failed — "+e.message; }
 }
 
 document.getElementById("disc").innerHTML=
