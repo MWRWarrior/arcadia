@@ -381,7 +381,7 @@ const SEC = {
   attack_speed:"Attack Speed %", cooldown_reduction:"Cooldown Reduction %",
   critical_strike_chance:"Crit Chance %", critical_strike_damage:"Crit Damage %",
   heavy_hit_chance:"Heavy Hit Chance %", heavy_hit_damage:"Heavy Hit Damage %",
-  dot_potency:"Dot Potency", dot_interval:"Dot Interval %", healing_power:"Healing Power %",
+  dot_potency:"Dot Potency (flat)", dot_potency_pct:"Dot Potency %", dot_interval:"Dot Interval %", healing_power:"Healing Power %",
   buff_power:"Buff Power", shielding_power:"Shielding Power %", knockback:"Knockback",
   aoe_radius:"AoE Radius", duration:"Duration %", shots_per_tick:"Shots Per Tick %",
   projectile_count:"Extra Projectiles", catch_radius:"Catch Radius",
@@ -597,7 +597,7 @@ function renderCompare(){
   out.innerHTML = candFx+
     (arows.length?`<div class="dl"><div class="h">Attribute</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">with candidate</div>${arows.join("")}</div>`:"")
    +(abr.length?`<div class="dl" style="margin-top:12px"><div class="h">Ability usable points</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${abr.join("")}</div>`:"")
-   +(srows.length?`<div class="dl" style="margin-top:12px"><div class="h">Secondary</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${srows.join("")}</div>`:"")
+   +(srows.length?`<div class="note" style="margin-top:12px;font-size:11.5px">Secondary rolls are shown as simple sums. Most stack additively, but a few combine as <code>(flat + attribute) &times; (1 + percent)</code> &mdash; Dot Potency is the confirmed case, which is why it has separate flat and % entries. Trust your in-game panel for the final figure.</div><div class="dl" style="margin-top:12px"><div class="h">Secondary</div><div class="h" style="text-align:right">now</div><div class="h"></div><div class="h" style="text-align:right">after</div>${srows.join("")}</div>`:"")
    +`<div class="verdict ${cls}">${msg}</div>`;
 }
 
