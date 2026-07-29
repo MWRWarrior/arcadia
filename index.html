@@ -584,6 +584,7 @@ const GEAR_LIB = [
   {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"fx":{"trigger":"on enemy kill","scope":"fire","effect":"Power buff to your fire abilities"},"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
   {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":30.0},{"s":"attack_speed","p":0,"v":7.2}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
+  {"slot":"Arms","name":"Viridium Yoku Hammer","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+100% threat generation briefly"},"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12}]},
   /* Fixed: primaries + unique Link Count lines. rolledSec = random secondaries
      (CDR, Healing Power, Dot Potency, …) — not hardcoded; picker fills them in. */
   {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolledSec":2,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"link_count_pct","p":0,"v":-100.0},{"s":"link_count","p":0,"v":8.0}]},
@@ -594,17 +595,25 @@ const GEAR_LIB = [
   {"slot":"Chest","name":"Ferrox Plate Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"precision","p":1,"v":9},{"s":"will","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":26.0},{"s":"attack_speed","p":0,"v":6.6},{"s":"physical_damage","p":0,"v":6.6}]},
   {"slot":"Chest","name":"Voltscale Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"attack_speed","p":0,"v":6.3},{"s":"physical_damage","p":0,"v":6.3},{"s":"heavy_hit_chance","p":0,"v":6.3}]},
   {"slot":"Chest","name":"Legendary chest (iL64)","rarity":"legendary","lvl":64,"fx":{"trigger":"on crit","scope":"gun","effect":"Power buff to your gun abilities — Gleam Twins, Minigun and Machinegun"},"rolls":[{"s":"vitality","p":1,"v":40},{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"critical_strike_chance","p":0,"v":7.2},{"s":"critical_strike_damage","p":0,"v":31}]},
+  {"slot":"Chest","name":"Virelda Warcrest Cuirass","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+3% Physical damage for 5s, stacking up to 10"},"rolls":[{"s":"power","p":1,"v":15},{"s":"ferocity","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
+  {"slot":"Chest","name":"Neotilus Trailseeker Coat","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on crit","scope":"explosive","effect":"10% chance to grant +1 Drone for 10s"},"rolls":[{"s":"power","p":1,"v":15},{"s":"precision","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Chest","name":"Necrotic Warrior Plate","rarity":"legendary","lvl":91,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58},{"s":"critical_strike_damage","p":0,"v":41.0},{"s":"attack_speed","p":0,"v":8.5}]},
   {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
+  /* Observed sample always showed these secondaries — treat as fixed until proven otherwise. */
+  {"slot":"Feet","name":"Voltscale Legguards","rarity":"legendary","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"critical_strike_chance","p":0,"v":7.0},{"s":"critical_strike_chance","p":0,"v":5.0,"t":"gun"},{"s":"critical_strike_damage","p":0,"v":28.0}]},
+  {"slot":"Feet","name":"Virelda Warcrest Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":15},{"s":"ferocity","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
+  {"slot":"Feet","name":"Neotilus Trailseeker Boots","rarity":"legendary","lvl":83,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":15},{"s":"precision","p":1,"v":15},{"s":"vitality","p":1,"v":53},{"s":"projectile_count","p":0,"v":1}]},
+  {"slot":"Feet","name":"Necrotic Warrior Boots","rarity":"legendary","lvl":91,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58}]},
   {"slot":"Head","name":"Encoded Helm","rarity":"rare","lvl":28,"rolls":[{"s":"vitality","p":1,"v":14},{"s":"precision","p":1,"v":7},{"s":"will","p":1,"v":7},{"s":"attack_speed","p":0,"v":5.5},{"s":"physical_damage","p":0,"v":5.5},{"s":"knockback","p":0,"v":22.0}]},
   {"slot":"Head","name":"Foundation Bulwark Helm","rarity":"uncommon","lvl":50,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"vitality","p":1,"v":26},{"s":"attack_speed","p":0,"v":7.2}]},
   {"slot":"Head","name":"Virelda Warcrest Helm","rarity":"legendary","lvl":50,"rolls":[{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"vitality","p":1,"v":26},{"s":"attack_speed","p":0,"v":8.0},{"s":"health","p":0,"v":80.0}]},
-  {"slot":"Head","name":"Neotilus Trailseeker Visor","rarity":"epic","lvl":54,"rolls":[{"s":"power","p":1,"v":13},{"s":"precision","p":1,"v":13},{"s":"vitality","p":1,"v":28},{"s":"critical_strike_damage","p":0,"v":35.0},{"s":"duration","p":0,"v":28.0},{"s":"attack_speed","p":0,"v":8.8}]},
+  {"slot":"Head","name":"Neotilus Trailseeker Visor","rarity":"legendary","lvl":50,"rolledSec":2,"fx":{"trigger":"on enemy kill","scope":"gun","effect":"5% chance to spawn a mini-minigun around you"},"rolls":[{"s":"power","p":1,"v":12},{"s":"precision","p":1,"v":12},{"s":"vitality","p":1,"v":26}]},
   {"slot":"Head","name":"Necrotic Warrior Crown","rarity":"legendary","lvl":54,"rolls":[{"s":"power","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"vitality","p":1,"v":28},{"s":"attack_speed","p":0,"v":8.8},{"s":"duration","p":0,"v":39.0},{"s":"aoe_radius","p":0,"v":200.0}]},
   {"slot":"Neck","name":"Gunner's Pendant","rarity":"rare","lvl":0,"rolls":[{"s":"duration","p":0,"v":50.0}]},
-  {"slot":"Ring 1","name":"Double Tap Ring","rarity":"epic","lvl":0,"rolls":[{"s":"healing_power","p":0,"v":10.5},{"s":"critical_strike_chance","p":0,"v":2.65}]},
-  {"slot":"Ring 1","name":"Pyrosphere Ring","rarity":"epic","lvl":0,"rolls":[{"s":"critical_strike_damage","p":0,"v":34.5},{"s":"cooldown_reduction","p":0,"v":12.0},{"s":"attack_speed","p":0,"v":2.65}]},
-  {"slot":"Ring 1","name":"Catalyst Ring","rarity":"epic","lvl":0,"rolls":[{"s":"dot_interval","p":0,"v":-50.0},{"s":"dot_potency","p":0,"v":24.0},{"s":"cooldown_reduction","p":0,"v":12.0},{"s":"health","p":0,"v":27.5},{"s":"health_regen","p":0,"v":0.55}]},
+  /* Unique line is fixed on every rarity; the other three secondaries are random. */
+  {"slot":"Ring 1","name":"Double Tap Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"shots_per_tick","p":0,"v":100,"t":"gun"}]},
+  {"slot":"Ring 1","name":"Pyrosphere Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"projectile_count","p":0,"v":1,"t":"pyrosphere"}]},
+  {"slot":"Ring 1","name":"Catalyst Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"dot_interval","p":0,"v":-50.0}]},
   {"slot":"Ring 1","name":"Drone Base Count Ring","rarity":"epic","lvl":0,"rolls":[{"s":"cooldown_reduction","p":0,"v":16.0},{"s":"duration","p":0,"v":16.0},{"s":"knockback","p":0,"v":11.0},{"s":"health","p":0,"v":27.5}]},
   {"slot":"Ring 1","name":"Always Catch Ring","rarity":"epic","lvl":0,"rolls":[{"s":"attack_speed","p":0,"v":16.0},{"s":"physical_damage","p":0,"v":3.0},{"s":"heavy_hit_chance","p":0,"v":3.0}]},
   {"slot":"Ring 1","name":"Kusarigama Ring","rarity":"epic","lvl":0,"rolls":[{"s":"physical_damage","p":0,"v":24.0},{"s":"heavy_hit_chance","p":0,"v":8.0},{"s":"attack_speed","p":0,"v":2.65},{"s":"cooldown_reduction","p":0,"v":1.25}]},
@@ -659,12 +668,12 @@ const PROCS=[
  {pat:"t4 head Virelda", trigger:"on crit", effect:"Explosion radius buff", scope:"", chance:100, buffs:true, id:"legendary_crit_explosion_radius_buff_ability"},
  {pat:"t5 chest Foundation", trigger:"on enemy kill", effect:"Power buff to cold abilities", scope:"cold", chance:100, buffs:true, id:"legendary_kill_cold_power_buff_ability"},
  {pat:"t5 chest Lunar", trigger:"on enemy hit", effect:"Power buff to chain lightning", scope:"chain_lightning", chance:100, buffs:true, id:"legendary_lightning_hit_power_buff_ability"},
- {pat:"t5 chest Neotilus", trigger:"on crit", effect:"Drone buff", scope:"explosive", chance:10, buffs:true, id:"legendary_explosive_crit_drone_buff_ability"},
+ {pat:"t5 chest Neotilus", trigger:"on crit", effect:"Drone buff", scope:"explosive", chance:10, buffs:true, id:"legendary_explosive_crit_drone_buff_ability", name:"Neotilus Trailseeker Coat"},
  {pat:"t5 feet Foundation", trigger:"on enemy hit", effect:"Heal 1 HP", scope:"", chance:1, id:"legendary_on_hit_1hp_heal", name:"Foundation Bulwark Greaves"},
- {pat:"t5 feet Virelda", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability"},
+ {pat:"t5 feet Virelda", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability", name:"Virelda Warcrest Greaves"},
  {pat:"t5 head Foundation", trigger:"on heavy hit", effect:"Knockback buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_knockback_buff_ability"},
  {pat:"t5 head Lunar", trigger:"on heavy hit", effect:"Fire nova", scope:"pyrosphere", chance:100, id:"firenova", name:"Lunar Conduit Crown"},
- {pat:"t5 head Neotilus", trigger:"on enemy kill", effect:"Spawns a mini minigun", scope:"gun", chance:5, id:"legendary_mini_minigun"},
+ {pat:"t5 head Neotilus", trigger:"on enemy kill", effect:"Spawns a mini minigun", scope:"gun", chance:5, id:"legendary_mini_minigun", name:"Neotilus Trailseeker Visor"},
  {pat:"t5 head Virelda", trigger:"on enemy hit", effect:"Fire burn DEBUFF on the enemy", scope:"physical", chance:100, id:"sword_fire_burn_debuff"},
  {pat:"t3 heavy Lunar", trigger:"on heavy hit", effect:"Power buff to explosive abilities", scope:"explosive", chance:100, buffs:true, id:"legendary_heavy_hit_explosive_power_buff_ability"},
  {pat:"t3 staff Foundation", trigger:"on crit", effect:"Power buff to void abilities", scope:"void", chance:100, buffs:true, id:"legendary_void_crit_power_buff_ability"},
@@ -753,8 +762,8 @@ const EXAMPLE={
     Feet:{item:"ChronoTehc Boots",lv:47,rolls:[{s:"vitality",p:1,v:29},{s:"will",p:1,v:9},{s:"focus",p:1,v:9},{s:"critical_strike_damage",p:0,v:22},{s:"healing_power",p:0,v:22},{s:"dot_potency",p:0,v:22}]},
     Back:{item:"Wanderer's Encoded Cloak",lv:4,rolls:[{s:"will",p:1,v:2},{s:"focus",p:1,v:2}]},
     Neck:{item:"Gunner's Pendant",lv:0,rolls:[{s:"duration",p:0,v:50,t:"gun"}]},
-    "Ring 1":{item:"Double Tap Ring",lv:0,rolls:[{s:"shots_per_tick",p:0,v:100,t:"gun"},{s:"attack_speed",p:0,v:24,t:"gun"},{s:"duration",p:0,v:16,t:"gun"},{s:"healing_power",p:0,v:10.5},{s:"critical_strike_chance",p:0,v:2.65}]},
-    "Ring 2":{item:"Pyrosphere Ring",lv:0,rolls:[{s:"projectile_count",p:0,v:1,t:"pyrosphere"},{s:"critical_strike_damage",p:0,v:34.5},{s:"cooldown_reduction",p:0,v:12},{s:"attack_speed",p:0,v:2.65}]},
+    "Ring 1":{item:"Double Tap Ring",lv:0,rolls:[{s:"shots_per_tick",p:0,v:100,t:"gun"},{s:"attack_speed",p:0,v:3.25},{s:"cooldown_reduction",p:0,v:1.5},{s:"dot_potency",p:0,v:13}]},
+    "Ring 2":{item:"Pyrosphere Ring",lv:0,rolls:[{s:"projectile_count",p:0,v:1,t:"pyrosphere"},{s:"critical_strike_chance",p:0,v:3.5},{s:"critical_strike_damage",p:0,v:14},{s:"attack_speed",p:0,v:3.5}]},
     Belt:{item:"Nihil Cinch",lv:0,rolls:[{s:"void_damage",p:0,v:20},{s:"aoe_radius",p:0,v:3.5},{s:"critical_strike_damage",p:0,v:12}]},
   },
   compare:{slot:"Chest",item:"Legendary chest (iLvl 64)",rolls:[
@@ -1018,8 +1027,8 @@ function renderCompare(){
   const fixedN=libItem?(libItem.rolls||[]).length:0;
   const needsPick=!!(libItem&&libItem.rolledSec);
   const pickNote=needsPick
-    ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — CDR, Healing Power and other extras on this item are <b>random rolls</b>, not fixed.
-       Choose the secondaries on your piece below (or BiS choices), then set their values.</div>` : "";
+    ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — extra secondaries on this item are <b>random rolls</b>, not fixed.
+       Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
   document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>{
     const head=needsPick&&i===fixedN?pickNote:"";
     return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN);
@@ -1388,7 +1397,7 @@ function renderRules(){
     `<b>Arms</b> (your weapon) and <b>Back</b> give offensive attributes only, no Vitality. <b>Accessories</b> (Neck/Rings/Belt) give <b>secondary stats only</b> — no attributes. `+
     `Roughly, armour scales as <code>Vitality ≈ 0.62 × iLvl</code> and <code>each offensive ≈ 0.19 × iLvl</code>. `+
     `Your weapon equips to <b>Arms</b> — there is no separate weapon slot. `+
-    `Some legendaries (e.g. Celestial Yoku Staff) keep unique lines fixed, but their extra secondaries — CDR, Healing Power, and the like — are <b>random rolls</b>; use <b>Secondary stat pick</b> to enter yours or plan BiS.`;
+    `Some legendaries keep unique lines fixed (Link Count, +1 projectile, [Gun] shots per tick, …), but their extra secondaries are <b>random rolls</b>; use <b>Secondary stat pick</b> to enter yours or plan BiS.`;
 }
 
 /* ---- quick entry: type or paste tooltip lines instead of using dropdowns ----
@@ -1479,8 +1488,8 @@ function renderGear(){
     const needsPick=!!(libItem&&libItem.rolledSec);
     const eff=e?`<span class="eff ${e.offShare>=60?'hi':e.offShare>=40?'mid':'lo'}" title="share of this item's level spent on offensive attributes">${e.offShare}% off</span>`:"";
     const pickNote=needsPick
-      ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — CDR, Healing Power and other extras on this item are <b>random rolls</b>, not fixed.
-         Choose the secondaries on your piece below (or BiS choices), then set their values.</div>` : "";
+      ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — extra secondaries on this item are <b>random rolls</b>, not fixed.
+         Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
     const rollHtml=rolls.map((r,i)=>{
       const head=needsPick&&i===fixedN?pickNote:"";
       return head+rollRow(sl,i,r,needsPick&&i>=fixedN);
