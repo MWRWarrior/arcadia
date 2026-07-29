@@ -233,9 +233,17 @@
     border:1px solid var(--edge);color:var(--ink);padding:7px;
     font-family:var(--sans);font-size:12.5px;resize:vertical}
   .qa .addbtn{margin:6px 9px 9px}
-  .libwrap{margin-bottom:7px}
+  .libwrap{margin-bottom:7px;position:relative}
   .libfilter{width:100%;margin-bottom:5px;background:var(--void);border:1px solid var(--edge);
     color:var(--ink);padding:7px 9px;font-family:var(--sans);font-size:12.5px}
+  .libhits{position:absolute;left:0;right:0;top:100%;z-index:20;max-height:220px;overflow:auto;
+    background:var(--panel2);border:1px solid var(--amber-dim);box-shadow:0 8px 22px rgba(0,0,0,.55)}
+  .libhits[hidden]{display:none}
+  .libhit{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--edge2);
+    background:transparent;color:var(--ink);padding:9px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+  .libhit:hover,.libhit:focus,.libhit.active{background:#1E1826;color:var(--amber-ink);outline:none}
+  .libhit .meta{color:var(--faint);font-size:11.5px}
+  .libhits .libempty{padding:10px 11px;color:var(--faint);font-size:12.5px}
   .rollrow.locked{opacity:.9}
   .rollrow .kind.fixed{color:var(--amber-ink)}
   .rollrow button.dup{color:var(--cyan);border-color:var(--edge)}
@@ -247,6 +255,8 @@
     .qa .addbtn{display:block;width:calc(100% - 18px);margin:8px 9px 12px;padding:12px 14px;
       font-size:15px;font-weight:600;text-align:center}
     .libfilter{font-size:16px;padding:10px 11px}
+    .libhits{max-height:260px}
+    .libhit{padding:12px 11px;font-size:14px}
   }
 
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
@@ -462,13 +472,12 @@
           <input class="itemname-edit" id="cmpName" placeholder="Candidate item name"
                  aria-label="Candidate item name" oninput="setCmpName(this.value)">
         </div>
-        <div class="cmpbar">
-          <input class="libfilter" id="cmpLibFilter" type="search" placeholder="Filter documented items…"
-                 aria-label="Filter documented items" oninput="filterLib('cmpLib',this.value)" style="flex:1">
-        </div>
-        <div class="cmpbar">
-          <select class="pick" id="cmpLib" aria-label="Load a documented item"
-                  onchange="loadFromLib(this.value)"></select>
+        <div class="cmpbar libwrap" style="display:block">
+          <input class="libfilter" id="cmpLibFilter" type="search" placeholder="Search documented items…"
+                 aria-label="Search documented items" autocomplete="off"
+                 oninput="libSearchCmp(this.value)" onfocus="libSearchCmp(this.value)"
+                 onkeydown="libSearchKey(event,'__cmp')" style="width:100%;margin:0">
+          <div class="libhits" id="libhits___cmp" hidden></div>
         </div>
         <div id="cmpRolls"></div>
         <button class="addbtn" onclick="addCmpRoll(1)">+ primary</button>
@@ -1057,9 +1066,6 @@ function renderCompare(){
     ? `<div class="note warn">A recent patch adjusted accessory secondary stats. Documented
        ring / neck / belt values here may be out of date &mdash; trust your own tooltip over this
        library for those slots.</div>` : "";
-  document.getElementById("cmpLib").innerHTML =
-    `<option value="">${lib.length?`load a documented ${C.slot} item (${lib.length})`:`no documented items for ${C.slot} yet`}</option>`
-    + lib.map((g,i)=>`<option value="${i}">${esc(libOptionLabel(g))}</option>`).join("");
   const nameEl=document.getElementById("cmpName");
   if(nameEl.value!==C.item) nameEl.value=C.item||"";
   const libItem=libByName(C.item);
@@ -1552,7 +1558,6 @@ function renderGear(){
       return head+rollRow(sl,i,r,needsPick&&i>=fixedN,locked);
     }).join("")+(needsPick&&rolls.length<=fixedN?pickNote:"");
     const lib=libFor(sl);
-    const libId="libpick_"+sl.replace(/\s/g,"_");
     const copySources=SLOTS.filter(s=>s!==sl&&S.gear[s]&&(S.gear[s].rolls||[]).some(r=>!r.p&&r.s));
     return `<details class="slot"${open.has(sl)?" open":""} data-slot="${sl}"><summary>
       <span class="slotname">${sl}</span>
@@ -1561,12 +1566,11 @@ function renderGear(){
       <div class="body">
         ${tooltipHtml(sl)}
         ${lib.length?`<div class="libwrap">
-          <input class="libfilter" type="search" placeholder="Filter ${sl} items…" aria-label="Filter documented ${sl} items"
-            oninput="filterLib('${libId}',this.value)">
-          <select class="pick" id="${libId}" aria-label="Load a documented item into ${sl}" onchange="equipFromLib('${sl}',this.value)">
-            <option value="">— load a documented ${sl} item (${lib.length}) —</option>
-            ${lib.map((x,i)=>`<option value="${i}">${esc(libOptionLabel(x))}</option>`).join("")}
-          </select>
+          <input class="libfilter" type="search" placeholder="Search ${sl} items (${lib.length})…"
+            aria-label="Search documented ${sl} items" autocomplete="off"
+            oninput="libSearch('${sl}',this.value)" onfocus="libSearch('${sl}',this.value)"
+            onkeydown="libSearchKey(event,'${sl}')">
+          <div class="libhits" id="libhits_${sl.replace(/\s/g,'_')}" hidden></div>
         </div>`:""}
         <details class="qa"${qaOpen.has(sl)||(mobileQa&&open.has(sl))?" open":""}><summary>Paste tooltip lines</summary>
           <textarea id="qa_${sl.replace(/\s/g,'_')}" class="qabox" rows="4"
@@ -1616,14 +1620,65 @@ function libOptionLabel(g){
   const rnd=g.rolledSec?` · ${g.rolledSec} random sec`:"";
   return `${rar}${g.name}${lv}${rnd}`;
 }
-function filterLib(selId,q){
-  const sel=document.getElementById(selId); if(!sel) return;
+function libHitsId(sl){ return "libhits_"+(sl==="__cmp"?"__cmp":sl.replace(/\s/g,"_")); }
+function libMatches(slot,q){
+  const lib=libFor(slot==="__cmp"?((S.compare&&S.compare.slot)||"Chest"):slot);
   const qq=String(q||"").trim().toLowerCase();
-  [...sel.options].forEach((o,i)=>{
-    if(i===0){ o.hidden=false; return; }
-    o.hidden=!!(qq&&!o.textContent.toLowerCase().includes(qq));
-  });
+  return lib.map((g,i)=>({g,i,label:libOptionLabel(g)}))
+    .filter(x=>!qq||x.label.toLowerCase().includes(qq)||x.g.name.toLowerCase().includes(qq));
 }
+function renderLibHits(sl,q){
+  const box=document.getElementById(libHitsId(sl)); if(!box) return;
+  const hits=libMatches(sl,q);
+  _libActive=0;
+  if(!hits.length){
+    box.hidden=false;
+    box.innerHTML=`<div class="libempty">No matches</div>`;
+    return;
+  }
+  box.hidden=false;
+  box.innerHTML=hits.map((x,hi)=>`<button type="button" class="libhit${hi===0?" active":""}" data-i="${x.i}" data-hi="${hi}"
+      onmousedown="event.preventDefault()" onclick="libPick('${sl}',${x.i})">
+      ${esc(x.g.name)}<div class="meta">${esc(libOptionLabel(x.g))}</div>
+    </button>`).join("");
+}
+function libSearch(sl,q){ renderLibHits(sl,q); }
+function libSearchCmp(q){ renderLibHits("__cmp",q); }
+function libPick(sl,idx){
+  const box=document.getElementById(libHitsId(sl));
+  if(box){ box.hidden=true; box.innerHTML=""; }
+  if(sl==="__cmp") loadFromLib(String(idx));
+  else equipFromLib(sl,String(idx));
+}
+let _libActive=0;
+function libSearchKey(e,sl){
+  const box=document.getElementById(libHitsId(sl));
+  if(!box||box.hidden){
+    if(e.key==="ArrowDown"){ e.preventDefault(); renderLibHits(sl,e.target.value); return; }
+    return;
+  }
+  const hits=[...box.querySelectorAll(".libhit")];
+  if(e.key==="Escape"){ e.preventDefault(); box.hidden=true; return; }
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    e.preventDefault();
+    if(!hits.length) return;
+    hits[_libActive]?.classList.remove("active");
+    _libActive=(e.key==="ArrowDown"?_libActive+1:_libActive-1+hits.length)%hits.length;
+    hits[_libActive]?.classList.add("active");
+    hits[_libActive]?.scrollIntoView({block:"nearest"});
+    return;
+  }
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const hit=hits[_libActive]||hits[0];
+    if(hit) libPick(sl,hit.getAttribute("data-i"));
+  }
+}
+// Close result popups when clicking elsewhere
+document.addEventListener("click",e=>{
+  if(e.target.closest(".libwrap")) return;
+  document.querySelectorAll(".libhits").forEach(b=>{ b.hidden=true; });
+});
 function rollRow(sl,i,r,isPick,locked){
   const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
                 :`${isPick||!r.s?`<option value="">— pick a secondary —</option>`:""}${SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("")}`;
