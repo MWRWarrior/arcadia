@@ -253,6 +253,13 @@
   .shot-rolls li{font-size:12.5px;color:var(--dim);padding:2px 0}
   .shot-rolls li .k{color:var(--faint);font-size:11px;margin-right:6px}
   .shot-rolls li.fix{color:var(--cyan)}
+  .shot-rolls li.db .k{color:var(--amber-ink)}
+  .shot-rolls li.ocr .k{color:var(--cyan)}
+  .shot-rolls li.bad{color:var(--red)}
+  .shot-rolls li.bad .k{color:var(--red)}
+  .shot-rolls li .note{display:block;font-size:11.5px;color:var(--faint);margin:1px 0 4px 2.6em}
+  .shot-rolls li.bad .note{color:#e08596}
+  .shot-warn{margin-top:8px;font-size:12.5px;color:var(--gold);line-height:1.45}
   .shot-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
   .shot details.raw{margin-top:8px}
   .shot details.raw summary{cursor:pointer;font-size:12px;color:var(--faint)}
@@ -1519,12 +1526,57 @@ const STAT_ALIASES = (()=>{
     "ethereal damage":"ethereal_damage", "dodge chance":"dodge_chance", dodge:"dodge_chance",
     "defense rating":"damage_reduction", defense:"damage_reduction",
     "stun resistance":"stun_resistance", "shots per tick":"shots_per_tick",
-    "extra projectiles":"projectile_count", "additional projectile":"projectile_count",
+    "extra projectiles":"projectile_count", "extra projectile":"projectile_count",
+    "additional projectile":"projectile_count", "additional projectiles":"projectile_count",
+    projectiles:"projectile_count", projectile:"projectile_count",
     "link count":"link_count", "link count flat":"link_count",
     knockback:"knockback",
   });
   return m;
 })();
+
+/* Observed secondary/primary magnitudes from documented tooltips — used to spot
+   OCR digit errors (e.g. "%"" read as 4 → +12% becomes +124). */
+const ROLL_BOUNDS=(()=>{
+  const m={};
+  GEAR_LIB.forEach(g=>(g.rolls||[]).forEach(r=>{
+    if(!r||!r.s || r.v==null || isNaN(+r.v)) return;
+    const v=+r.v;
+    if(!m[r.s]) m[r.s]={min:v,max:v,n:1};
+    else{ m[r.s].min=Math.min(m[r.s].min,v); m[r.s].max=Math.max(m[r.s].max,v); m[r.s].n++; }
+  }));
+  return m;
+})();
+
+function isPctStat(stat){
+  return !!(SEC[stat] && /%/.test(SEC[stat])) || /_pct$/.test(stat);
+}
+
+function sanitizeOcrValue(stat, value, hadPct){
+  const v=+value;
+  if(!stat || isNaN(v)) return {v:0, flagged:true, note:"couldn't read a number"};
+
+  // Primary signal: a % secondary whose OCR line has no "%" almost always ate the
+  // glyph into a trailing digit (+12% → +124, +41% → +412). Value size is not a
+  // reliable check — the game merges duplicate secondaries into one tooltip line
+  // (e.g. 2× DoT shows as a single +20.50%), so a "high" total can be legit.
+  // Only rewrite whole integers (decimals like 20.50 kept their shape).
+  const raw=String(Math.abs(v));
+  if(isPctStat(stat) && !hadPct && /^\d+$/.test(raw) && raw.length>=2){
+    const cand=parseFloat(raw.slice(0,-1))*Math.sign(v||1);
+    if(!isNaN(cand) && Math.abs(cand)>=0.5)
+      return {v:cand, flagged:false, fixed:true, was:v,
+        note:`corrected from OCR ${v} (% missing on a % stat — stripped trailing digit)`};
+  }
+
+  // Weak secondary: refuse only values that are absurd even as a merged stack.
+  const b=ROLL_BOUNDS[stat];
+  const singleHi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4)
+                  :(AKEYS.includes(stat)?140:80);
+  if(stat!=="threat" && Math.abs(v)>Math.max(singleHi*5, 300))
+    return {v, flagged:true, note:`OCR ${v} is implausibly high even as stacked lines`};
+  return {v, flagged:false};
+}
 
 const RARITY_RE=/^(legendary|epic|rare|uncommon|common)\b/i;
 const SLOT_FROM_TIP={
@@ -1644,14 +1696,27 @@ function parseRollLine(line){
   // (e.g. "-100% Link Count" → link_count_pct, same pattern as Dot Potency).
   if(hadPct && SEC[stat] && !/%/.test(SEC[stat]) && SEC[stat+"_pct"]) stat=stat+"_pct";
   const isAttr=AKEYS.includes(stat);
-  const roll={s:stat,p:isAttr?1:0,v:value};
+  const roll={s:stat,p:isAttr?1:0,v:value,hadPct:!!hadPct};
   if(!isAttr && tag) roll.t=tag;
   return roll;
 }
 
 function parseTooltipText(text){
   const raw=String(text||"").replace(/\r/g,"");
-  const lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  let lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  // Tooltips wrap "+1 additional / projectile" across two lines.
+  const stitched=[];
+  for(let i=0;i<lines.length;i++){
+    const a=lines[i], b=lines[i+1];
+    if(b && /additional$/i.test(a) && /^projectiles?$/i.test(b)){
+      stitched.push(a+" "+b); i++; continue;
+    }
+    if(b && /abilities have/i.test(a) && /projectile/i.test(b) && !/projectile/i.test(a)){
+      stitched.push(a+" "+b); i++; continue;
+    }
+    stitched.push(a);
+  }
+  lines=stitched;
   const skip=/^(primary|secondary|requires:?|press shift|compare|forged|found in|foundation-pattern|volatile)/i;
   let name=null, slot=null, rarity=null, lvl=null, section=null;
   const rolls=[], fxLines=[];
@@ -1666,6 +1731,14 @@ function parseTooltipText(text){
     const lm=line.match(/^level\s*[:.]?\s*(\d{1,3})\b/i)
           || line.match(/\blevel\s*[:.]?\s*(\d{1,3})\b/i);
     if(lm && +lm[1]>0 && +lm[1]<200){ lvl=+lm[1]; continue; }
+
+    // "abilities have +1 additional projectile" — unique fixed line, not a dropdown secondary.
+    const proj=line.match(/abilities have\s*\+?(\d+)\s+additional\s+projectiles?/i)
+             || line.match(/\+?(\d+)\s+additional\s+projectiles?/i);
+    if(proj && (section==="secondary" || section==="primary" || !section)){
+      rolls.push({s:"projectile_count",p:0,v:+proj[1]});
+      continue;
+    }
 
     const rarityHit=(()=>{
       const low=tipNorm(line);
@@ -1690,7 +1763,7 @@ function parseTooltipText(text){
         for(let j=i-1;j>=0;j--){
           if(skip.test(lines[j]) || RARITY_RE.test(lines[j]) || /^level\b/i.test(lines[j])) continue;
           if(parseRollLine(lines[j])) continue;
-          name=lines[j].replace(/^[^A-Za-z]+/,""); break;
+          name=lines[j].replace(/^[^A-Za-z]+/,"").replace(/[^A-Za-z0-9' -]+$/g,"").trim(); break;
         }
       }
       continue;
@@ -1720,7 +1793,7 @@ function parseTooltipText(text){
       if(!name && !RARITY_RE.test(line) && !/^level\b/i.test(line) && !skip.test(line) && /[A-Za-z]/.test(line)){
         // Prefer the longest early title-ish line as a candidate; first wins unless
         // a later line looks more like a full item name (3+ words).
-        const cand=line.replace(/^[^A-Za-z]+/,"");
+        const cand=line.replace(/^[^A-Za-z]+/,"").replace(/[^A-Za-z0-9' -]+$/g,"").trim();
         if(!name) name=cand;
         else if(cand.split(/\s+/).length>=3 && name.split(/\s+/).length<3) name=cand;
       }
@@ -1731,6 +1804,8 @@ function parseTooltipText(text){
   if(!lines.some(l=>/^primary$/i.test(l)||/^secondary$/i.test(l))){
     rolls.forEach(r=>{ r.p=AKEYS.includes(r.s)?1:0; });
   }
+
+  if(name) name=name.replace(/[^A-Za-z0-9' -]+$/g,"").trim();
 
   const lib=fuzzyLibMatch(name) || (()=>{
     // Fall back: score every line as a possible name against the library.
@@ -1751,6 +1826,8 @@ function parseTooltipText(text){
     name=lib.name;
     if(!slot) slot=lib.slot;
   }
+  // Name alone often encodes the slot when OCR ate "Epic Neck" / "Legendary Feet".
+  if(!slot && name) slot=normalizeSlotTip(name);
 
   return {
     name:name||"",
@@ -1764,32 +1841,38 @@ function parseTooltipText(text){
   };
 }
 
+function annotateOcrRoll(r){
+  const san=sanitizeOcrValue(r.s, r.v, r.hadPct);
+  const o={s:r.s, p:r.p?1:0, v:san.flagged?0:san.v, src:"ocr"};
+  if(r.t) o.t=r.t;
+  if(san.flagged){ o.flagged=true; o.ocrV=r.v; o.note=san.note; }
+  else if(san.fixed){ o.fixed=true; o.ocrV=san.was; o.note=san.note; }
+  return o;
+}
 function buildImportGear(parsed){
   const slot=resolveImportSlot(parsed.slot, parsed.lib);
   if(!slot) return null;
   if(parsed.lib){
     const m=materializeLibItem(parsed.lib);
+    // Tag library-fixed rolls so the preview can tell them apart from OCR.
+    m.rolls=m.rolls.map(r=>{
+      if(!r.s) return {s:"",p:0,v:0,src:"ocr"}; // empty pick slot, filled below
+      const o={s:r.s,p:r.p?1:0,v:+r.v||0,src:"lib"}; if(r.t) o.t=r.t; return o;
+    });
     const fixed=(parsed.lib.rolls||[]).map(r=>r.s);
     const fixedSet=new Set(fixed);
     // Random secondaries only — ignore OCR primaries when the library knows them.
-    const secs=parsed.rolls.filter(r=>!r.p && r.s && !fixedSet.has(r.s));
+    const secs=parsed.rolls.filter(r=>!r.p && r.s && !fixedSet.has(r.s)).map(annotateOcrRoll);
     let pi=0;
     for(let i=0;i<m.rolls.length;i++){
       if(!m.rolls[i].s && pi<secs.length){
-        const s=secs[pi++];
-        m.rolls[i]={s:s.s,p:0,v:s.v}; if(s.t) m.rolls[i].t=s.t;
+        m.rolls[i]=secs[pi++];
       }
     }
-    while(pi<secs.length){
-      const s=secs[pi++];
-      const o={s:s.s,p:0,v:s.v}; if(s.t) o.t=s.t;
-      m.rolls.push(o);
-    }
+    while(pi<secs.length) m.rolls.push(secs[pi++]);
     return {slot, gear:m, fromLib:true};
   }
-  const rolls=parsed.rolls.map(r=>{
-    const o={s:r.s,p:r.p?1:0,v:+r.v||0}; if(r.t) o.t=r.t; return o;
-  });
+  const rolls=parsed.rolls.map(annotateOcrRoll);
   return {slot, gear:{item:parsed.name||"Imported item",lv:parsed.lvl||0,rolls}, fromLib:false};
 }
 
@@ -1798,6 +1881,17 @@ function rollLabel(r){
   const nm=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s);
   const tag=r.t?`[${TAG_NAME[r.t]||r.t}] `:"";
   return `${tag}${r.v>=0?"+":""}${r.v} ${nm}`;
+}
+function shotRollLi(r){
+  if(r.flagged){
+    const nm=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s||"roll");
+    return `<li class="bad"><span class="k">check</span>+${esc(String(r.ocrV))} ${esc(nm)}
+      <span class="note">${esc(r.note||"implausible OCR value — not imported")}. Enter the real number after equipping.</span></li>`;
+  }
+  const cls=r.src==="lib"?"db":(r.s?"ocr":"fix");
+  const badge=r.src==="lib"?"db":(r.s?"ocr":"pick");
+  const note=r.fixed?`<span class="note">${esc(r.note||"corrected from OCR")}</span>`:"";
+  return `<li class="${cls}"><span class="k">${badge}</span>${esc(rollLabel(r))}${note}</li>`;
 }
 
 let _shotPending=null;
@@ -1830,21 +1924,19 @@ function renderShotPreview(parsed, thumbUrl){
   }
   _shotPending={parsed, built, thumbUrl};
   const g=built.gear;
-  const prim=(g.rolls||[]).filter(r=>r.p);
-  const secs=(g.rolls||[]).filter(r=>!r.p);
+  const rolls=g.rolls||[];
+  const flagged=rolls.filter(r=>r.flagged).length;
   const src=built.fromLib
-    ? `Matched library item — fixed rolls from the database, secondaries from the screenshot.`
-    : `Not in the item database — using OCR for everything (double-check the numbers).`;
+    ? `Matched library item — amber rows are from the database, cyan rows from the screenshot.`
+    : `Not in the item database — every number is from OCR (double-check them).`;
   box.hidden=false;
   box.innerHTML=`<div class="shot-prev">
       ${thumbUrl?`<img src="${thumbUrl}" alt="Tooltip screenshot preview">`:""}
       <div class="shot-meta">
         <div><b>${esc(g.item||parsed.name||"Item")}</b><span class="slotpill">${esc(built.slot)}</span></div>
         <div style="margin-top:4px;color:var(--faint);font-size:12px">${esc(src)}</div>
-        <ul class="shot-rolls">
-          ${prim.map(r=>`<li><span class="k">pri</span>${esc(rollLabel(r))}</li>`).join("")}
-          ${secs.map(r=>`<li class="${r.s?"":"fix"}"><span class="k">sec</span>${esc(rollLabel(r))}</li>`).join("")}
-        </ul>
+        <ul class="shot-rolls">${rolls.map(shotRollLi).join("")}</ul>
+        ${flagged?`<div class="shot-warn">${flagged} OCR value${flagged>1?"s":""} look wrong and will not be imported — fix them on the item after equipping.</div>`:""}
         <div class="shot-actions">
           <button type="button" class="btn primary" id="shotEquip">Equip to ${esc(built.slot)}</button>
           <button type="button" class="addbtn" id="shotCancel">Cancel</button>
@@ -1858,20 +1950,31 @@ function renderShotPreview(parsed, thumbUrl){
 function applyShotImport(){
   if(!_shotPending) return;
   const {built}=_shotPending;
-  S.gear[built.slot]=built.gear;
+  // Persist only gameplay fields — drop OCR provenance. Flagged values stay as
+  // empty picks (stat known, value 0) so the player fills the real number.
+  const rolls=(built.gear.rolls||[]).map(r=>{
+    const o={s:r.s||"", p:r.p?1:0, v:r.flagged?0:(+r.v||0)};
+    if(r.t) o.t=r.t;
+    return o;
+  });
+  const flagged=(built.gear.rolls||[]).filter(r=>r.flagged).length;
+  S.gear[built.slot]={item:built.gear.item, lv:built.gear.lv||0, rolls};
   _openSlot=built.slot;
   shotClearPreview();
   shotSetStatus("");
   save();
-  const empty=(built.gear.rolls||[]).filter(r=>!r.p&&!r.s).length;
-  toast(empty
-    ? `Equipped ${built.gear.item} — fill ${empty} random secondary pick${empty>1?"s":""}`
-    : `Equipped ${built.gear.item} in ${built.slot}`);
+  const empty=rolls.filter(r=>!r.p&&!r.s).length;
+  if(flagged) toast(`Equipped ${built.gear.item} — fix ${flagged} flagged value${flagged>1?"s":""}`);
+  else if(empty) toast(`Equipped ${built.gear.item} — fill ${empty} random secondary pick${empty>1?"s":""}`);
+  else toast(`Equipped ${built.gear.item} in ${built.slot}`);
 }
 
 async function loadTesseract(){
   if(window.Tesseract) return window.Tesseract;
   if(_tesseractReady) return _tesseractReady;
+  // Loaded from jsDelivr on demand — CSP on the live host allows that CDN plus
+  // wasm-unsafe-eval / blob workers / tessdata (see .htaccess). Not vendored in
+  // the repo; the ~20MB engine stays off git.
   _tesseractReady=new Promise((resolve,reject)=>{
     const s=document.createElement("script");
     s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
@@ -1891,10 +1994,11 @@ function loadImageFromBlob(blob){
     img.src=url;
   });
 }
-function prepTooltipImage(img){
-  // Nearest-neighbour upscale + hard threshold — pixel UI fonts OCR far better
-  // when each glyph is big and binary rather than anti-aliased on dark glass.
-  const scale=Math.max(3, Math.min(5, Math.ceil(900/Math.max(img.width,1))));
+function prepTooltipImage(img, invert){
+  // Nearest-neighbour upscale + hard threshold. Default invert → dark glyphs on
+  // light (Tesseract's preferred polarity); callers can also try the un-inverted
+  // pass when the first read is garbage.
+  const scale=Math.max(4, Math.min(8, Math.ceil(1200/Math.max(img.width,1))));
   const c=document.createElement("canvas");
   c.width=Math.max(1, Math.round(img.width*scale));
   c.height=Math.max(1, Math.round(img.height*scale));
@@ -1905,25 +2009,48 @@ function prepTooltipImage(img){
   const d=id.data;
   for(let i=0;i<d.length;i+=4){
     const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    // Orange name / cyan labels / white values all clear this; dark panel does not.
-    const v=y>48?255:0;
+    const on=y>48;
+    const v=invert?(on?0:255):(on?255:0);
     d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
   }
   ctx.putImageData(id,0,0);
   return c;
 }
 
+function ocrScore(parsed){
+  // Prefer library matches and more parsed rolls — used to pick between polarity passes.
+  let n=(parsed.rolls||[]).length;
+  if(parsed.lib) n+=8;
+  if(parsed.slot) n+=2;
+  if(parsed.name && parsed.name.length>6) n+=1;
+  return n;
+}
+
 async function ocrTooltipImage(img){
   const T=await loadTesseract();
-  const canvas=prepTooltipImage(img);
-  const result=await T.recognize(canvas,"eng",{
+  const opts={
     logger:m=>{
       if(m.status==="recognizing text" && m.progress!=null){
         shotSetStatus(`Reading tooltip… ${Math.round(m.progress*100)}%`);
+      }else if(m.status==="loading language traineddata" && m.progress!=null){
+        shotSetStatus(`Loading OCR language… ${Math.round(m.progress*100)}%`);
+      }else if(m.status==="initializing tesseract"||m.status==="loading tesseract core"){
+        shotSetStatus("Starting OCR…");
       }
     },
-  });
-  return (result&&result.data&&result.data.text)||"";
+  };
+  // Try dark-on-light first; if that barely parses, fall back to light-on-dark.
+  const pass=async(invert)=>{
+    const canvas=prepTooltipImage(img, invert);
+    const result=await T.recognize(canvas,"eng",opts);
+    return (result&&result.data&&result.data.text)||"";
+  };
+  const textA=await pass(true);
+  const parsedA=parseTooltipText(textA);
+  if(ocrScore(parsedA)>=3) return textA;
+  shotSetStatus("Retrying OCR polarity…");
+  const textB=await pass(false);
+  return ocrScore(parseTooltipText(textB))>ocrScore(parsedA)?textB:textA;
 }
 
 async function handleShotBlob(blob){
