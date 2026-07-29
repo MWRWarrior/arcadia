@@ -1989,33 +1989,15 @@ function applyShotImport(){
 async function loadTesseract(){
   if(window.Tesseract) return window.Tesseract;
   if(_tesseractReady) return _tesseractReady;
-  // Blob workers resolve importScripts against an opaque blob: base, so paths
-  // must be absolute http(s) URLs — "/vendor/..." throws "URL is invalid".
-  // file:// falls back to paths relative to index.html.
-  const abs=(p)=>{
-    if(location.protocol==="http:"||location.protocol==="https:")
-      return new URL(p, location.origin).href;
-    return p;
-  };
-  const root="vendor/tesseract";
+  // Loaded from jsDelivr on demand — CSP on the live host allows that CDN plus
+  // wasm-unsafe-eval / blob workers / tessdata (see .htaccess). Not vendored in
+  // the repo; the ~20MB engine stays off git.
   _tesseractReady=new Promise((resolve,reject)=>{
     const s=document.createElement("script");
-    s.src=abs("/"+root+"/tesseract.min.js");
-    if(location.protocol==="file:") s.src=root+"/tesseract.min.js";
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
     s.async=true;
-    s.onload=()=>{
-      if(!window.Tesseract){ reject(new Error("Tesseract missing")); return; }
-      const base=(location.protocol==="file:")
-        ? root
-        : abs("/"+root);
-      window.Tesseract.__arcadiaPaths={
-        workerPath:base+"/worker.min.js",
-        corePath:base+"/core",
-        langPath:base+"/lang",
-      };
-      resolve(window.Tesseract);
-    };
-    s.onerror=()=>reject(new Error("Couldn't load OCR library"));
+    s.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error("Tesseract missing"));
+    s.onerror=()=>reject(new Error("Couldn't load OCR library (network?)"));
     document.head.appendChild(s);
   });
   return _tesseractReady;
@@ -2063,11 +2045,7 @@ function ocrScore(parsed){
 
 async function ocrTooltipImage(img){
   const T=await loadTesseract();
-  const paths=T.__arcadiaPaths||{};
   const opts={
-    workerPath:paths.workerPath,
-    corePath:paths.corePath,
-    langPath:paths.langPath,
     logger:m=>{
       if(m.status==="recognizing text" && m.progress!=null){
         shotSetStatus(`Reading tooltip… ${Math.round(m.progress*100)}%`);
