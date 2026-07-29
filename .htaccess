@@ -30,18 +30,28 @@ RedirectMatch 404 /\.git(/|$)
   # request. The screenshot itself never leaves the browser — recognition runs
   # locally in WebAssembly; only the engine and its language data are fetched.
   #
-  # That feature needs four things the old policy denied, and every one of them
+  # That feature needs six things the old policy denied, and every one of them
   # fails silently on the server while working fine from a local file, where no
   # policy applies at all:
-  #   script-src  cdn.jsdelivr.net  the engine itself
-  #   worker-src  blob:             it runs recognition in a worker built from a blob
-  #   connect-src both CDNs         the wasm core, then the language data
-  #   img-src     blob:             the preview thumbnail shown before you confirm
+  #   script-src  cdn.jsdelivr.net    the engine itself
+  #   script-src  'wasm-unsafe-eval'  compiling WebAssembly counts as evaluating
+  #                                   script. This is the narrow directive that
+  #                                   permits only that -- plain 'unsafe-eval'
+  #                                   would also re-open eval() and new Function
+  #                                   for the whole page, which is not worth it
+  #                                   for one import button.
+  #   worker-src  blob:               recognition runs in a worker built from a blob
+  #   connect-src both CDNs           the language data
+  #   connect-src data:               the wasm core arrives as a data: URI and is
+  #                                   read with fetch(). data: is not covered by
+  #                                   'self' or by any host source, so it has to
+  #                                   be named -- the same trap as the fonts below.
+  #   img-src     blob:               the preview thumbnail shown before you confirm
   #
   # font-src needs data: because the webfonts are embedded in the page rather
   # than fetched — without it they fall back to default-src 'self', which does
   # not cover data: URIs, and every heading silently renders in a fallback face.
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
 </IfModule>
 
 <IfModule mod_deflate.c>
