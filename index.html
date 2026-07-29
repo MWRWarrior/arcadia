@@ -318,6 +318,7 @@
   .ttrow{display:flex;gap:8px;align-items:baseline;font-size:13px;line-height:1.55}
   .ttv{color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
   .ttl{color:var(--cyan)}
+  .ttph .ttv{color:var(--faint);font-style:italic}
   .ttrule{height:1px;background:var(--amber-dim);margin:11px -13px 0;opacity:.65}
   .ttnote{font-size:12px;color:var(--faint);line-height:1.55;margin-top:3px}
 
@@ -1586,17 +1587,22 @@ function hiddenFor(name){
 }
 
 function ttStatLine(r){
+  if(!r.p && !r.s){
+    return `<div class="ttrow ttph"><span class="ttv">&lt;secondary&gt;</span></div>`;
+  }
   const pct=r.p?false:/%/.test(SEC[r.s]||"");
   const label=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s).replace(/\s*%$/,"");
+  const tag=r.t?`[${TAG_NAME[r.t]||r.t}] `:"";
   const v=(r.v>0?"+":"")+r.v+(pct?"%":"");
-  return `<div class="ttrow"><span class="ttv">${esc(v)}</span><span class="ttl">${esc(label)}</span></div>`;
+  return `<div class="ttrow"><span class="ttv">${esc(v)}</span><span class="ttl">${esc(tag+label)}</span></div>`;
 }
 function tooltipHtml(sl){
   const g=S.gear[sl];
   if(!g||!g.item&&!(g.rolls||[]).length) return "";
   const rolls=g.rolls||[];
   const prim=rolls.filter(r=>r.p&&AKEYS.includes(r.s));
-  const sec=rolls.filter(r=>!r.p&&r.s);
+  // Keep empty rolled-sec slots so the card shows <secondary> until the user picks.
+  const sec=rolls.filter(r=>!r.p);
   const e=itemBudget(sl);
   const kn=hiddenFor(g.item);
 
