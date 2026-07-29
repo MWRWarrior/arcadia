@@ -24,11 +24,24 @@ RedirectMatch 404 /\.git(/|$)
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  # The app is self-contained: no third-party scripts, styles, frames or fonts.
+  # The app is self-contained apart from one opt-in feature: importing gear from
+  # a tooltip screenshot loads an OCR engine from jsDelivr, and only when someone
+  # actually drops in an image. A visitor who never uses it makes no third-party
+  # request. The screenshot itself never leaves the browser — recognition runs
+  # locally in WebAssembly; only the engine and its language data are fetched.
+  #
+  # That feature needs four things the old policy denied, and every one of them
+  # fails silently on the server while working fine from a local file, where no
+  # policy applies at all:
+  #   script-src  cdn.jsdelivr.net  the engine itself
+  #   worker-src  blob:             it runs recognition in a worker built from a blob
+  #   connect-src both CDNs         the wasm core, then the language data
+  #   img-src     blob:             the preview thumbnail shown before you confirm
+  #
   # font-src needs data: because the webfonts are embedded in the page rather
   # than fetched — without it they fall back to default-src 'self', which does
   # not cover data: URIs, and every heading silently renders in a fallback face.
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
 </IfModule>
 
 <IfModule mod_deflate.c>
