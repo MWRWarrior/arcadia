@@ -233,6 +233,21 @@
     border:1px solid var(--edge);color:var(--ink);padding:7px;
     font-family:var(--sans);font-size:12.5px;resize:vertical}
   .qa .addbtn{margin:6px 9px 9px}
+  .libwrap{margin-bottom:7px}
+  .libfilter{width:100%;margin-bottom:5px;background:var(--void);border:1px solid var(--edge);
+    color:var(--ink);padding:7px 9px;font-family:var(--sans);font-size:12.5px}
+  .rollrow.locked{opacity:.9}
+  .rollrow .kind.fixed{color:var(--amber-ink)}
+  .rollrow button.dup{color:var(--cyan);border-color:var(--edge)}
+  .slot .body{display:flex;flex-direction:column}
+  @media (max-width:520px){
+    .qa{order:-1;margin-top:0;margin-bottom:10px;border-color:var(--amber-dim)}
+    .qa summary{font-size:14px;padding:12px;font-weight:600;color:var(--ink)}
+    .qabox{font-size:16px;min-height:120px;padding:10px}
+    .qa .addbtn{display:block;width:calc(100% - 18px);margin:8px 9px 12px;padding:12px 14px;
+      font-size:15px;font-weight:600;text-align:center}
+    .libfilter{font-size:16px;padding:10px 11px}
+  }
 
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
     background:var(--panel2);border:1px solid var(--amber-dim);color:var(--ink);
@@ -448,6 +463,10 @@
                  aria-label="Candidate item name" oninput="setCmpName(this.value)">
         </div>
         <div class="cmpbar">
+          <input class="libfilter" id="cmpLibFilter" type="search" placeholder="Filter documented items…"
+                 aria-label="Filter documented items" oninput="filterLib('cmpLib',this.value)" style="flex:1">
+        </div>
+        <div class="cmpbar">
           <select class="pick" id="cmpLib" aria-label="Load a documented item"
                   onchange="loadFromLib(this.value)"></select>
         </div>
@@ -606,6 +625,7 @@ const GEAR_LIB = [
   {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
   /* Observed sample always showed these secondaries — treat as fixed until proven otherwise. */
   {"slot":"Feet","name":"Voltscale Legguards","rarity":"legendary","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"critical_strike_chance","p":0,"v":7.0},{"s":"critical_strike_chance","p":0,"v":5.0,"t":"gun"},{"s":"critical_strike_damage","p":0,"v":28.0}]},
+  {"slot":"Feet","name":"Foundation Bulwark Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on enemy hit","scope":"","effect":"1% chance to heal you for 1 HP"},"rolls":[{"s":"power","p":1,"v":15},{"s":"will","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Feet","name":"Virelda Warcrest Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":15},{"s":"ferocity","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Feet","name":"Neotilus Trailseeker Boots","rarity":"legendary","lvl":83,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":15},{"s":"precision","p":1,"v":15},{"s":"vitality","p":1,"v":53},{"s":"projectile_count","p":0,"v":1}]},
   {"slot":"Feet","name":"Necrotic Warrior Boots","rarity":"legendary","lvl":91,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58}]},
@@ -777,6 +797,7 @@ const EXAMPLE={
 
 /* ═══════════ STATE + SHARE LINKS ═══════════ */
 const LS="sb_planner_v3";
+const LS_OPEN="sb_planner_open_slot";
 let S = fromHash() || loadState();   // legacy links + stored build, synchronous
 // A compressed link can't be read synchronously, so decode it after first paint.
 (async()=>{
@@ -882,7 +903,12 @@ function fromHash(){
 // Try for a short link first (/b/x7k2p) so the URL doesn't look like spam to
 // chat auto-moderators. If the API is unreachable, fall back to the long
 // self-contained link — sharing must never break just because a server is down.
-async function shareLink(){
+async function shareLink(force){
+  const miss=emptySecSlots();
+  if(miss.length && !force){
+    toast(`Unfilled secondary picks on ${miss.join(", ")}`, ()=>shareLink(true), "Share anyway");
+    return;
+  }
   const code=await encodeBuild();
   const longUrl=location.origin+location.pathname+"#b="+code;
   let url=longUrl, short=false;
@@ -906,6 +932,14 @@ async function shareLink(){
     toast("Link ready in the address bar — copy it");
   }
 }
+function emptySecSlots(){
+  const miss=[];
+  SLOTS.forEach(sl=>{
+    const g=S.gear[sl]; if(!g) return;
+    if((g.rolls||[]).some(r=>!r.p&&!r.s)) miss.push(sl);
+  });
+  return miss;
+}
 // Opening /b/x7k2p: fetch the stored build and load it.
 async function loadFromShortLink(){
   const m=location.pathname.match(/\/b\/([A-Za-z0-9]{4,12})\/?$/);
@@ -925,12 +959,12 @@ async function loadFromShortLink(){
 /* An optional `undo` callback turns the toast into the escape hatch for a
    destructive action, which beats a confirm dialog for something you'll do
    often. Announced politely so a screen reader hears it at all. */
-function toast(msg,undo){
+function toast(msg,undo,undoLabel){
   const t=document.getElementById("toast");
   t.textContent=msg;
   if(undo){
     const b=document.createElement("button");
-    b.className="btn"; b.type="button"; b.textContent="Undo";
+    b.className="btn"; b.type="button"; b.textContent=undoLabel||"Undo";
     b.style.marginLeft="11px";
     b.onclick=()=>{ t.classList.remove("on"); undo(); };
     t.appendChild(b);
@@ -1025,7 +1059,7 @@ function renderCompare(){
        library for those slots.</div>` : "";
   document.getElementById("cmpLib").innerHTML =
     `<option value="">${lib.length?`load a documented ${C.slot} item (${lib.length})`:`no documented items for ${C.slot} yet`}</option>`
-    + lib.map((g,i)=>`<option value="${i}">${g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":""}${g.name}${g.lvl?` (iL${g.lvl})`:""}</option>`).join("");
+    + lib.map((g,i)=>`<option value="${i}">${esc(libOptionLabel(g))}</option>`).join("");
   const nameEl=document.getElementById("cmpName");
   if(nameEl.value!==C.item) nameEl.value=C.item||"";
   const libItem=libByName(C.item);
@@ -1036,7 +1070,8 @@ function renderCompare(){
        Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
   document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>{
     const head=needsPick&&i===fixedN?pickNote:"";
-    return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN);
+    const locked=!!(libItem&&i<fixedN);
+    return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN,locked);
   }).join("")+(needsPick&&(C.rolls||[]).length<=fixedN?pickNote:"");
 
   const out=document.getElementById("cmpOut");
@@ -1495,7 +1530,12 @@ function renderGear(){
     open.add(name);
     if(d.querySelector("details.qa[open]")) qaOpen.add(name);
   });
+  if(_openSlot){ open.add(_openSlot); _openSlot=null; }
+  if(!open.size){
+    try{ const s=localStorage.getItem(LS_OPEN); if(s&&SLOTS.includes(s)) open.add(s); }catch(e){}
+  }
   const focus=_gearFocus; _gearFocus=null;
+  const mobileQa=typeof matchMedia==="function"&&matchMedia("(max-width:520px)").matches;
 
   document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
     const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
@@ -1508,22 +1548,30 @@ function renderGear(){
          Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
     const rollHtml=rolls.map((r,i)=>{
       const head=needsPick&&i===fixedN?pickNote:"";
-      return head+rollRow(sl,i,r,needsPick&&i>=fixedN);
+      const locked=!!(libItem&&i<fixedN);
+      return head+rollRow(sl,i,r,needsPick&&i>=fixedN,locked);
     }).join("")+(needsPick&&rolls.length<=fixedN?pickNote:"");
-    return `<details class="slot"${open.has(sl)?" open":""}><summary>
+    const lib=libFor(sl);
+    const libId="libpick_"+sl.replace(/\s/g,"_");
+    const copySources=SLOTS.filter(s=>s!==sl&&S.gear[s]&&(S.gear[s].rolls||[]).some(r=>!r.p&&r.s));
+    return `<details class="slot"${open.has(sl)?" open":""} data-slot="${sl}"><summary>
       <span class="slotname">${sl}</span>
       <span class="itemname ${g?'':'empty'}">${g?esc(g.item):(SLOT_HINT[sl]?'empty — '+SLOT_HINT[sl]:'empty')}</span>
       ${e?`<span class="ilvl">i${e.level}</span>`:''}${eff}</summary>
       <div class="body">
         ${tooltipHtml(sl)}
-        ${(()=>{const lib=libFor(sl); return lib.length?`<select class="pick" style="margin-bottom:7px" aria-label="Load a documented item into ${sl}" onchange="equipFromLib('${sl}',this.value)">
-          <option value="">— load a documented ${sl} item (${lib.length}) —</option>
-          ${lib.map((x,i)=>`<option value="${i}">${x.rarity?x.rarity[0].toUpperCase()+x.rarity.slice(1)+" · ":""}${x.name}${x.lvl?` (iL${x.lvl})`:""}</option>`).join("")}
-        </select>`:""})()}
-        <details class="qa"${qaOpen.has(sl)?" open":""}><summary>Quick add — paste tooltip lines</summary>
+        ${lib.length?`<div class="libwrap">
+          <input class="libfilter" type="search" placeholder="Filter ${sl} items…" aria-label="Filter documented ${sl} items"
+            oninput="filterLib('${libId}',this.value)">
+          <select class="pick" id="${libId}" aria-label="Load a documented item into ${sl}" onchange="equipFromLib('${sl}',this.value)">
+            <option value="">— load a documented ${sl} item (${lib.length}) —</option>
+            ${lib.map((x,i)=>`<option value="${i}">${esc(libOptionLabel(x))}</option>`).join("")}
+          </select>
+        </div>`:""}
+        <details class="qa"${qaOpen.has(sl)||(mobileQa&&open.has(sl))?" open":""}><summary>Paste tooltip lines</summary>
           <textarea id="qa_${sl.replace(/\s/g,'_')}" class="qabox" rows="4"
-            placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed"></textarea>
-          <button class="addbtn" onclick="quickAdd('${sl}')">Add these rolls</button>
+            placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed&#10;&#10;Fastest way to enter a piece — paste from the game."></textarea>
+          <button class="addbtn" onclick="quickAdd('${sl}')">Add pasted rolls</button>
         </details>
         <div class="nameRow">
           <input class="itemname-edit" placeholder="Item name" aria-label="Item name for ${sl}" value="${g?esc(g.item):''}" oninput="setName('${sl}',this.value)">
@@ -1533,12 +1581,28 @@ function renderGear(){
         ${rollHtml}
         ${ACCESSORY.has(sl)?'':`<button class="addbtn" onclick="addRoll('${sl}',1)">+ primary (attribute)</button>`}
         <button class="addbtn" onclick="addRoll('${sl}',0)">+ secondary</button>
+        ${copySources.length?`<select class="pick" style="margin-top:6px" aria-label="Copy secondaries into ${sl}"
+          onchange="copySecsFrom('${sl}',this.value);this.value=''">
+          <option value="">— copy secondaries from slot —</option>
+          ${copySources.map(s=>`<option value="${s}">${s}${S.gear[s].item?": "+esc(S.gear[s].item):""}</option>`).join("")}
+        </select>`:""}
         ${g?`<button class="addbtn" style="background:#2a1620;color:#e08596;border-color:#3a2330" onclick="clearSlot('${sl}')">clear</button>`:''}
       </div></details>`;}).join("");
 
+  document.querySelectorAll("#gear details.slot").forEach(d=>{
+    d.addEventListener("toggle",()=>{
+      const name=d.getAttribute("data-slot")||d.querySelector(".slotname")?.textContent;
+      if(!name) return;
+      try{
+        if(d.open) localStorage.setItem(LS_OPEN,name);
+        else if(localStorage.getItem(LS_OPEN)===name) localStorage.removeItem(LS_OPEN);
+      }catch(e){}
+    });
+  });
+
   if(focus&&focus.sl!=="__cmp"){
     const slot=[...document.querySelectorAll("#gear details.slot")]
-      .find(d=>d.querySelector(".slotname")?.textContent===focus.sl);
+      .find(d=>(d.getAttribute("data-slot")||d.querySelector(".slotname")?.textContent)===focus.sl);
     const row=slot?.querySelectorAll(".rollrow")[focus.i];
     const el=focus.which==="v"?row?.querySelector("input[type=number]")
       :focus.which==="t"?row?.querySelector("select.tagsel")
@@ -1546,21 +1610,41 @@ function renderGear(){
     if(el){ el.focus(); if(el.select) try{ el.select(); }catch(e){} }
   }
 }
-function rollRow(sl,i,r,isPick){
+function libOptionLabel(g){
+  const rar=g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":"";
+  const lv=g.lvl?` (iL${g.lvl})`:"";
+  const rnd=g.rolledSec?` · ${g.rolledSec} random sec`:"";
+  return `${rar}${g.name}${lv}${rnd}`;
+}
+function filterLib(selId,q){
+  const sel=document.getElementById(selId); if(!sel) return;
+  const qq=String(q||"").trim().toLowerCase();
+  [...sel.options].forEach((o,i)=>{
+    if(i===0){ o.hidden=false; return; }
+    o.hidden=!!(qq&&!o.textContent.toLowerCase().includes(qq));
+  });
+}
+function rollRow(sl,i,r,isPick,locked){
   const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
                 :`${isPick||!r.s?`<option value="">— pick a secondary —</option>`:""}${SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("")}`;
-  const kind=r.p?'primary':(isPick?'pick':'secondary');
-  return `<div class="rollrow"><span class="kind ${isPick?'pick':''}">${kind}</span>
-    <select onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
-    <input type="number" step="0.05" value="${r.v}" onchange="setRoll('${sl}',${i},'v',this.value)"${isPick&&!r.s?' placeholder="value"':''}>
-    ${r.p?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
+  const kind=locked?'fixed':(r.p?'primary':(isPick?'pick':'secondary'));
+  const dis=locked?" disabled":"";
+  return `<div class="rollrow${locked?" locked":""}"><span class="kind ${locked?'fixed':(isPick?'pick':'')}">${kind}</span>
+    <select${dis} onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
+    <input type="number" step="0.05" value="${r.v}"${dis}
+      onchange="setRoll('${sl}',${i},'v',this.value)"
+      ${isPick?`onkeydown="pickValueKey(event,'${sl}',${i})"`:""}
+      ${isPick&&!r.s?' placeholder="value"':''}>
+    ${r.p||locked?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
       <option value="">all abilities</option>
       <optgroup label="Category (multiple abilities)">${["gun","elemental","throwable","explosion","physical","melee","sphere","weapon","heal","support"]
         .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
       <optgroup label="Single ability">${["gleamtwins","pyrosphere","chakram","drone"]
         .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
     </select>`}
-    <button onclick="delRoll('${sl}',${i})">✕</button></div>`;
+    ${locked?"":`<button type="button" class="dup" title="Duplicate this roll" onclick="dupRoll('${sl}',${i})">⧉</button>
+    <button type="button" onclick="delRoll('${sl}',${i})" title="Remove roll">✕</button>`}
+    ${locked?`<span class="kind fixed" title="Fixed on this documented item">locked</span>`:""}</div>`;
 }
 function renderDisc(){
   // Wording required verbatim by the Soulbound Third-Party Extensions Policy.
@@ -1603,6 +1687,11 @@ const HIDDEN_INDEX=(()=>{
     put(id,  {id,display:disp,stat:HIDDEN_STATS[id]||null});
   });
   Object.entries(HIDDEN_STATS).forEach(([id,stat])=>put(id,{id,stat}));
+  // Documented gear is "known" — with or without a hidden effect — so the tooltip
+  // never says "hasn't been recorded" for a library item.
+  GEAR_LIB.forEach(g=>{
+    put(g.name, g.fx ? {display:g.name, fx:g.fx} : {display:g.name});
+  });
   PROCS.forEach(p=>{ put(p.name,{proc:p,display:p.name}); put(p.pat,{proc:p}); });
   return ix;
 })();
@@ -1632,7 +1721,7 @@ function tooltipHtml(sl){
   const kn=hiddenFor(g.item);
 
   let hidden;
-  if(kn&&(kn.stat||kn.proc)){
+  if(kn&&(kn.stat||kn.proc||kn.fx)){
     const bits=[];
     if(kn.stat){
       const m=/^([+\-]?[\d.]+%?)\s+(.*)$/.exec(kn.stat);
@@ -1642,8 +1731,10 @@ function tooltipHtml(sl){
     }
     if(kn.proc) bits.push(`<div class="ttrow"><span class="ttv">${esc(kn.proc.trigger)}</span>
       <span class="ttl">${esc(kn.proc.effect)}${kn.proc.scope?` [${esc(fxLabel(kn.proc.scope))}]`:""} · ${kn.proc.chance}%</span></div>`);
+    else if(kn.fx) bits.push(`<div class="ttrow"><span class="ttv">${esc(kn.fx.trigger)}</span>
+      <span class="ttl">${esc(kn.fx.effect)}${kn.fx.scope?` [${esc(fxLabel(kn.fx.scope))}]`:""}</span></div>`);
     hidden=`<div class="tthead">Not on the in-game tooltip</div>${bits.join("")}
-      ${kn.proc?`<div class="ttnote">Only a Legendary copy carries this. A lower-rarity one of the same item has nothing.</div>`:""}`;
+      ${kn.proc||kn.fx?`<div class="ttnote">Only a Legendary copy carries this. A lower-rarity one of the same item has nothing.</div>`:""}`;
   }else if(kn){
     hidden=`<div class="tthead">Not on the in-game tooltip</div>
       <div class="ttnote">Nothing hidden on this one — it's been checked.</div>`;
@@ -1725,6 +1816,7 @@ function equipFromLib(slot,idx){
   if(idx==="") return;
   const g=libFor(slot)[+idx]; if(!g) return;
   S.gear[slot]=materializeLibItem(g);
+  _openSlot=slot;
   save(); toast(`Equipped ${g.name}`);
 }
 function setCmpName(v){ S.compare.item=v; persist(); }
@@ -1736,18 +1828,75 @@ function setLoadout(i,v){ S.loadout[i]=v; save(); }
 function setName(sl,v){ if(!S.gear[sl])S.gear[sl]={item:v,lv:0,rolls:[]}; S.gear[sl].item=v; persist(); }
 function setLv(sl,v){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]}; S.gear[sl].lv=+v||0; save(); }
 let _gearFocus=null;
+let _openSlot=null;
 function setRoll(sl,i,f,v){
-  const r=gearOf(sl).rolls[i]; r[f]=f==='v'?(+v||0):v;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  if(rollLocked(sl,i)&&(f==="s"||f==="v")) return;
+  const r=g.rolls[i]; r[f]=f==='v'?(+v||0):v;
   // After picking a stat, jump to the value field; keep the slot open via renderGear.
   if(sl!=="__cmp") _gearFocus={sl,i,which:f==="s"?"v":f};
   save();
 }
 function setTag(sl,i,tag){
+  if(rollLocked(sl,i)) return;
   const r=gearOf(sl).rolls[i]; if(tag)r.t=tag; else delete r.t;
   if(sl!=="__cmp") _gearFocus={sl,i,which:"t"};
   save();
 }
-function delRoll(sl,i){ gearOf(sl).rolls.splice(i,1); if(sl!=="__cmp") _gearFocus={sl,i:Math.max(0,i-1),which:"s"}; save(); }
+function rollLocked(sl,i){
+  const item=sl==="__cmp"?(S.compare&&S.compare.item):(S.gear[sl]&&S.gear[sl].item);
+  const lib=libByName(item);
+  return !!(lib&&i<(lib.rolls||[]).length);
+}
+function delRoll(sl,i){
+  if(rollLocked(sl,i)){ toast("That line is fixed on this item"); return; }
+  gearOf(sl).rolls.splice(i,1);
+  if(sl!=="__cmp") _gearFocus={sl,i:Math.max(0,i-1),which:"s"};
+  save();
+}
+function dupRoll(sl,i){
+  if(rollLocked(sl,i)) return;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  const copy=JSON.parse(JSON.stringify(g.rolls[i]));
+  g.rolls.splice(i+1,0,copy);
+  if(sl!=="__cmp"){ _openSlot=sl==="__cmp"?null:sl; _gearFocus={sl,i:i+1,which:"s"}; }
+  save();
+}
+function copySecsFrom(sl,from){
+  if(!from||from===sl) return;
+  const src=S.gear[from]; if(!src) return;
+  const secs=(src.rolls||[]).filter(r=>!r.p&&r.s).map(r=>{
+    const o={s:r.s,p:0,v:+r.v||0}; if(r.t) o.t=r.t; return o;
+  });
+  if(!secs.length){ toast("No secondaries to copy"); return; }
+  if(!S.gear[sl]) S.gear[sl]={item:"New item",lv:0,rolls:[]};
+  const g=S.gear[sl];
+  const lib=libByName(g.item);
+  const fixedN=lib?(lib.rolls||[]).length:0;
+  const kept=fixedN?(g.rolls||[]).slice(0,fixedN):(g.rolls||[]).filter(r=>r.p);
+  g.rolls=kept.concat(secs);
+  _openSlot=sl;
+  save(); toast(`Copied ${secs.length} secondaries from ${from}`);
+}
+function pickValueKey(e,sl,i){
+  if(e.key!=="Enter"&&!(e.key==="Tab"&&!e.shiftKey)) return;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  g.rolls[i].v=+e.target.value||0;
+  const item=sl==="__cmp"?(S.compare&&S.compare.item):g.item;
+  const lib=libByName(item);
+  const fixedN=lib?(lib.rolls||[]).length:0;
+  let next=-1;
+  for(let j=i+1;j<(g.rolls||[]).length;j++){
+    if(!g.rolls[j].p&&(!lib||j>=fixedN)){ next=j; break; }
+  }
+  if(e.key==="Enter"||next>=0){
+    e.preventDefault();
+    persist();
+    if(sl==="__cmp"){ save(); return; }
+    _gearFocus={sl,i:next>=0?next:i,which:next>=0?"s":"v"};
+    save();
+  }
+}
 function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]};
   S.gear[sl].rolls.push(p?{s:ARMOUR.has(sl)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0});
   if(sl!=="__cmp") _gearFocus={sl,i:S.gear[sl].rolls.length-1,which:"s"};
