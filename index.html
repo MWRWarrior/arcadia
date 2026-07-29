@@ -1949,12 +1949,26 @@ function applyShotImport(){
 async function loadTesseract(){
   if(window.Tesseract) return window.Tesseract;
   if(_tesseractReady) return _tesseractReady;
+  // Root-absolute on http(s) so /b/<id> short links still resolve the assets;
+  // relative when someone opens index.html as a local file.
+  const root=(location.protocol==="http:"||location.protocol==="https:")
+    ? "/vendor/tesseract" : "vendor/tesseract";
   _tesseractReady=new Promise((resolve,reject)=>{
     const s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.src=root+"/tesseract.min.js";
     s.async=true;
-    s.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error("Tesseract missing"));
-    s.onerror=()=>reject(new Error("Couldn't load OCR library (network?)"));
+    s.onload=()=>{
+      if(!window.Tesseract){ reject(new Error("Tesseract missing")); return; }
+      // Stash paths on the API object so recognize() can find worker/core/lang
+      // without hitting a CDN.
+      window.Tesseract.__arcadiaPaths={
+        workerPath:root+"/worker.min.js",
+        corePath:root+"/core",
+        langPath:root+"/lang",
+      };
+      resolve(window.Tesseract);
+    };
+    s.onerror=()=>reject(new Error("Couldn't load OCR library"));
     document.head.appendChild(s);
   });
   return _tesseractReady;
@@ -1994,10 +2008,18 @@ function prepTooltipImage(img){
 async function ocrTooltipImage(img){
   const T=await loadTesseract();
   const canvas=prepTooltipImage(img);
+  const paths=T.__arcadiaPaths||{};
   const result=await T.recognize(canvas,"eng",{
+    workerPath:paths.workerPath,
+    corePath:paths.corePath,
+    langPath:paths.langPath,
     logger:m=>{
       if(m.status==="recognizing text" && m.progress!=null){
         shotSetStatus(`Reading tooltip… ${Math.round(m.progress*100)}%`);
+      }else if(m.status==="loading language traineddata" && m.progress!=null){
+        shotSetStatus(`Loading OCR language… ${Math.round(m.progress*100)}%`);
+      }else if(m.status==="initializing tesseract"||m.status==="loading tesseract core"){
+        shotSetStatus("Starting OCR…");
       }
     },
   });
