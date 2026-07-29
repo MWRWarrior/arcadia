@@ -215,6 +215,8 @@
   .note b{color:var(--ink)} .note code{font-family:var(--pixel);font-size:11px;color:var(--amber-ink)}
   .note.info{border-left-color:var(--cyan)}
   .note.warn{border-left-color:var(--gold)}
+  .secpick-note{margin:10px 0 6px}
+  .rollrow .kind.pick{color:var(--cyan)}
   .bar{height:3px;background:var(--sunk);border:1px solid var(--edge2);overflow:hidden}
   .bar>i{display:block;height:100%;background:var(--amber)}
   .h{font-family:var(--pixel);font-size:10px;text-transform:uppercase;color:var(--faint);
@@ -582,7 +584,9 @@ const GEAR_LIB = [
   {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"fx":{"trigger":"on enemy kill","scope":"fire","effect":"Power buff to your fire abilities"},"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
   {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":30.0},{"s":"attack_speed","p":0,"v":7.2}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
-  {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"dot_potency","p":0,"v":37.0},{"s":"heavy_hit_chance","p":0,"v":9.0},{"s":"link_count","p":0,"v":-100.0}]},
+  /* Fixed: primaries + unique Link Count lines. rolledSec = random secondaries
+     (CDR, Healing Power, Dot Potency, …) — not hardcoded; picker fills them in. */
+  {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolledSec":2,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"link_count_pct","p":0,"v":-100.0},{"s":"link_count","p":0,"v":8.0}]},
   {"slot":"Arms","name":"Redeemed Celestial Katana","rarity":"legendary","lvl":39,"rolls":[{"s":"power","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"attack_speed","p":0,"v":8.8},{"s":"duration","p":0,"v":35.0}]},
   {"slot":"Back","name":"Wanderer's Encoded Cloak","rarity":"rare","lvl":4,"rolls":[{"s":"will","p":1,"v":2},{"s":"focus","p":1,"v":2}]},
   {"slot":"Belt","name":"Nihil Cinch","rarity":"rare","lvl":0,"rolls":[{"s":"void_damage","p":0,"v":20.0},{"s":"aoe_radius","p":0,"v":3.5},{"s":"critical_strike_damage","p":0,"v":12.0}]},
@@ -724,6 +728,7 @@ const SEC = {
   buff_power:"Buff Power", shielding_power:"Shielding Power %", knockback:"Knockback",
   aoe_radius:"AoE Radius", duration:"Duration %", shots_per_tick:"Shots Per Tick %",
   projectile_count:"Extra Projectiles", catch_radius:"Catch Radius",
+  link_count:"Link Count (flat)", link_count_pct:"Link Count %",
   physical_damage:"Physical DMG %", fire_damage:"Fire DMG %", cold_damage:"Cold DMG %",
   lightning_damage:"Lightning DMG %", void_damage:"Void DMG %", ethereal_damage:"Ethereal DMG %",
   explosive_damage:"Explosive DMG %", poison_damage:"Poison DMG %", health:"Max Health", health_regen:"Health Regen",
@@ -793,7 +798,9 @@ function buildPayload(){
     l:S.loadout.map(id=>{const i=ABILITIES.findIndex(a=>a.id===id); return i<0?-1:i;}),
     g:SLOTS.map(sl=>{
       const g=S.gear[sl]; if(!g) return 0;
-      return [g.item||"", g.lv||0, (g.rolls||[]).map(r=>[ALLSTATS.indexOf(r.s), r.p?1:0, r.v, r.t?TAG_KEYS.indexOf(r.t)+1:0])];
+      return [g.item||"", g.lv||0, (g.rolls||[])
+        .filter(r=>r.s&&ALLSTATS.indexOf(r.s)>=0)
+        .map(r=>[ALLSTATS.indexOf(r.s), r.p?1:0, r.v, r.t?TAG_KEYS.indexOf(r.t)+1:0])];
     })};
 }
 const b64url = bytes => { let s=""; bytes.forEach(b=>s+=String.fromCharCode(b));
@@ -934,7 +941,7 @@ function attrTotals(){
 }
 function secTotals(){
   const t={}; SLOTS.forEach(sl=>{const g=S.gear[sl]; if(!g)return;
-    (g.rolls||[]).forEach(r=>{ if(!r.p) t[r.s]=(t[r.s]||0)+(+r.v||0); });}); return t;
+    (g.rolls||[]).forEach(r=>{ if(!r.p&&r.s) t[r.s]=(t[r.s]||0)+(+r.v||0); });}); return t;
 }
 function equipped(){ return S.loadout.filter(Boolean).map(id=>ABILITIES.find(a=>a.id===id)).filter(Boolean); }
 function coverage(){ const c={}; AKEYS.forEach(k=>c[k]=0);
@@ -990,7 +997,7 @@ function attrTotalsWith(slot,cand){
 function secTotalsWith(slot,cand){
   const t={};
   SLOTS.forEach(sl=>{ const g=(sl===slot)?cand:S.gear[sl]; if(!g)return;
-    (g.rolls||[]).forEach(r=>{ if(!r.p) t[r.s]=(t[r.s]||0)+(+r.v||0); });});
+    (g.rolls||[]).forEach(r=>{ if(!r.p&&r.s) t[r.s]=(t[r.s]||0)+(+r.v||0); });});
   return t;
 }
 function renderCompare(){
@@ -1007,7 +1014,16 @@ function renderCompare(){
     + lib.map((g,i)=>`<option value="${i}">${g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":""}${g.name}${g.lvl?` (iL${g.lvl})`:""}</option>`).join("");
   const nameEl=document.getElementById("cmpName");
   if(nameEl.value!==C.item) nameEl.value=C.item||"";
-  document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>rollRow("__cmp",i,r)).join("");
+  const libItem=libByName(C.item);
+  const fixedN=libItem?(libItem.rolls||[]).length:0;
+  const needsPick=!!(libItem&&libItem.rolledSec);
+  const pickNote=needsPick
+    ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — CDR, Healing Power and other extras on this item are <b>random rolls</b>, not fixed.
+       Choose the secondaries on your piece below (or BiS choices), then set their values.</div>` : "";
+  document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>{
+    const head=needsPick&&i===fixedN?pickNote:"";
+    return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN);
+  }).join("")+(needsPick&&(C.rolls||[]).length<=fixedN?pickNote:"");
 
   const out=document.getElementById("cmpOut");
   if(!(C.rolls||[]).length){ out.innerHTML=staleNote+
@@ -1371,7 +1387,8 @@ function renderRules(){
     `<b>How gear rolls:</b> <b>Armour</b> (Head/Torso/Feet) always gives Vitality as its largest primary plus <b>2 offensive attributes</b>. `+
     `<b>Arms</b> (your weapon) and <b>Back</b> give offensive attributes only, no Vitality. <b>Accessories</b> (Neck/Rings/Belt) give <b>secondary stats only</b> — no attributes. `+
     `Roughly, armour scales as <code>Vitality ≈ 0.62 × iLvl</code> and <code>each offensive ≈ 0.19 × iLvl</code>. `+
-    `Your weapon equips to <b>Arms</b> — there is no separate weapon slot.`;
+    `Your weapon equips to <b>Arms</b> — there is no separate weapon slot. `+
+    `Some legendaries (e.g. Celestial Yoku Staff) keep unique lines fixed, but their extra secondaries — CDR, Healing Power, and the like — are <b>random rolls</b>; use <b>Secondary stat pick</b> to enter yours or plan BiS.`;
 }
 
 /* ---- quick entry: type or paste tooltip lines instead of using dropdowns ----
@@ -1406,6 +1423,7 @@ const STAT_ALIASES = (()=>{
     "defense rating":"damage_reduction", defense:"damage_reduction",
     "stun resistance":"stun_resistance", "shots per tick":"shots_per_tick",
     "extra projectiles":"projectile_count", "additional projectile":"projectile_count",
+    "link count":"link_count", "link count flat":"link_count",
   });
   return m;
 })();
@@ -1427,10 +1445,14 @@ function parseRollLine(line){
                   return t?[null,t[2],t[3],t[1]]:null; })();
   if(!m) return null;
   const value=parseFloat(m[1]); if(isNaN(value)) return null;
+  const hadPct=m[2]==="%";
   let name=m[3].toLowerCase().replace(/[^a-z% ]/g,"").replace(/\s+/g," ").trim()
               .replace(/\s*%$/,"");
-  const stat=STAT_ALIASES[name];
+  let stat=STAT_ALIASES[name];
   if(!stat) return null;
+  // Prefer the % twin when the pasted line had a % and the flat key has no % label
+  // (e.g. "-100% Link Count" → link_count_pct, same pattern as Dot Potency).
+  if(hadPct && SEC[stat] && !/%/.test(SEC[stat]) && SEC[stat+"_pct"]) stat=stat+"_pct";
   const isAttr=AKEYS.includes(stat);
   const roll={s:stat,p:isAttr?1:0,v:value};
   if(!isAttr && tag) roll.t=tag;
@@ -1452,7 +1474,17 @@ function quickAdd(slot){
 function renderGear(){
   document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
     const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
+    const libItem=g?libByName(g.item):null;
+    const fixedN=libItem?(libItem.rolls||[]).length:0;
+    const needsPick=!!(libItem&&libItem.rolledSec);
     const eff=e?`<span class="eff ${e.offShare>=60?'hi':e.offShare>=40?'mid':'lo'}" title="share of this item's level spent on offensive attributes">${e.offShare}% off</span>`:"";
+    const pickNote=needsPick
+      ? `<div class="note info secpick-note"><b>Secondary stat pick</b> — CDR, Healing Power and other extras on this item are <b>random rolls</b>, not fixed.
+         Choose the secondaries on your piece below (or BiS choices), then set their values.</div>` : "";
+    const rollHtml=rolls.map((r,i)=>{
+      const head=needsPick&&i===fixedN?pickNote:"";
+      return head+rollRow(sl,i,r,needsPick&&i>=fixedN);
+    }).join("")+(needsPick&&rolls.length<=fixedN?pickNote:"");
     return `<details class="slot"><summary>
       <span class="slotname">${sl}</span>
       <span class="itemname ${g?'':'empty'}">${g?esc(g.item):(SLOT_HINT[sl]?'empty — '+SLOT_HINT[sl]:'empty')}</span>
@@ -1473,18 +1505,19 @@ function renderGear(){
           ${ACCESSORY.has(sl)||!e?'':`<span class="lvbadge" title="item level = sum of primary attribute points">iLvl ${e.level}</span>`}
         </div>
         ${g?fxHtml(fxFor(g.item)):""}
-        ${rolls.map((r,i)=>rollRow(sl,i,r)).join("")}
+        ${rollHtml}
         ${ACCESSORY.has(sl)?'':`<button class="addbtn" onclick="addRoll('${sl}',1)">+ primary (attribute)</button>`}
         <button class="addbtn" onclick="addRoll('${sl}',0)">+ secondary</button>
         ${g?`<button class="addbtn" style="background:#2a1620;color:#e08596;border-color:#3a2330" onclick="clearSlot('${sl}')">clear</button>`:''}
       </div></details>`;}).join("");
 }
-function rollRow(sl,i,r){
+function rollRow(sl,i,r,isPick){
   const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
-                :SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("");
-  return `<div class="rollrow"><span class="kind">${r.p?'primary':'secondary'}</span>
+                :`${isPick||!r.s?`<option value="">— pick a secondary —</option>`:""}${SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("")}`;
+  const kind=r.p?'primary':(isPick?'pick':'secondary');
+  return `<div class="rollrow"><span class="kind ${isPick?'pick':''}">${kind}</span>
     <select onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
-    <input type="number" step="0.05" value="${r.v}" onchange="setRoll('${sl}',${i},'v',this.value)">
+    <input type="number" step="0.05" value="${r.v}" onchange="setRoll('${sl}',${i},'v',this.value)"${isPick&&!r.s?' placeholder="value"':''}>
     ${r.p?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
       <option value="">all abilities</option>
       <optgroup label="Category (multiple abilities)">${["gun","elemental","throwable","explosion","physical","melee","sphere","weapon","heal","support"]
@@ -1554,7 +1587,7 @@ function tooltipHtml(sl){
   if(!g||!g.item&&!(g.rolls||[]).length) return "";
   const rolls=g.rolls||[];
   const prim=rolls.filter(r=>r.p&&AKEYS.includes(r.s));
-  const sec=rolls.filter(r=>!r.p);
+  const sec=rolls.filter(r=>!r.p&&r.s);
   const e=itemBudget(sl);
   const kn=hiddenFor(g.item);
 
@@ -1629,16 +1662,29 @@ function libFor(slot){
   const s = slot.startsWith("Ring") ? "Ring 1" : slot;
   return GEAR_LIB.filter(g=>g.slot===s);
 }
+function libByName(name){
+  if(!name) return null;
+  return GEAR_LIB.find(x=>x.name===name)||null;
+}
+/* Fixed rolls from the library, plus empty slots for random secondaries
+   (rolledSec). Caller fills those in — sample CDR/Healing values aren't hardcoded. */
+function materializeLibItem(g){
+  const rolls=JSON.parse(JSON.stringify(g.rolls||[]));
+  const n=+g.rolledSec||0;
+  for(let i=0;i<n;i++) rolls.push({s:"",p:0,v:0});
+  return {item:g.name,rolls};
+}
 function loadFromLib(idx){
   if(idx==="") return;
   const g=libFor(S.compare.slot)[+idx]; if(!g) return;
-  S.compare={slot:S.compare.slot,item:g.name,rolls:JSON.parse(JSON.stringify(g.rolls))};
+  const m=materializeLibItem(g);
+  S.compare={slot:S.compare.slot,item:m.item,rolls:m.rolls};
   save(); toast(`Loaded ${g.name}`);
 }
 function equipFromLib(slot,idx){
   if(idx==="") return;
   const g=libFor(slot)[+idx]; if(!g) return;
-  S.gear[slot]={item:g.name,rolls:JSON.parse(JSON.stringify(g.rolls))};
+  S.gear[slot]=materializeLibItem(g);
   save(); toast(`Equipped ${g.name}`);
 }
 function setCmpName(v){ S.compare.item=v; persist(); }
