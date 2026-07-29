@@ -61,7 +61,7 @@ if ($method === 'GET') {
     }
     $order = $sort === 'new' ? 'published_at DESC' : 'votes DESC, published_at DESC';
 
-    $sql  = "SELECT id, title, author, summary, votes, hits, published_at
+    $sql  = "SELECT id, title, author, notes, summary, votes, hits, published_at
              FROM builds WHERE $where ORDER BY $order LIMIT " . ($PAGE + 1) . " OFFSET " . ($page * $PAGE);
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
@@ -142,17 +142,31 @@ if ($action !== 'publish') fail(400, 'Unknown action');
 
 $title  = trim((string) ($body['title'] ?? ''));
 $author = trim((string) ($body['author'] ?? ''));
+$notes  = trim((string) ($body['notes'] ?? ''));
 $sum    = $body['summary'] ?? null;
 
 // Strip control characters and collapse whitespace; output is escaped client-side too.
 $clean = static fn(string $s): string =>
     trim(preg_replace('/\s+/u', ' ', preg_replace('/[\x00-\x1F\x7F]/u', '', $s)) ?? '');
 
+// Notes are the one field where line breaks carry meaning, so newlines survive
+// while every other control character does not. Runs of blank lines collapse to
+// one so a wall of padding cannot stretch a gallery card.
+$cleanMultiline = static function (string $s): string {
+    $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $s) ?? '';
+    $s = str_replace("\r\n", "\n", $s);
+    $s = preg_replace('/[ \t]+/u', ' ', $s) ?? '';
+    $s = preg_replace('/\n{3,}/u', "\n\n", $s) ?? '';
+    return trim($s);
+};
+
 $title  = $clean($title);
 $author = $clean($author);
+$notes  = $cleanMultiline($notes);
 
 if (mb_strlen($title) < 3 || mb_strlen($title) > 80)  fail(400, 'Title must be 3–80 characters');
 if (mb_strlen($author) > 40)                          fail(400, 'Name too long');
+if (mb_strlen($notes) > 800)                          fail(400, 'Notes must be 800 characters or fewer');
 if (!is_array($sum))                                  fail(400, 'Missing summary');
 
 $summary = json_encode([
@@ -172,11 +186,11 @@ try {
 }
 
 $ok = $pdo->prepare(
-    'UPDATE builds SET title = ?, author = ?, summary = ?, published = 1,
+    'UPDATE builds SET title = ?, author = ?, notes = ?, summary = ?, published = 1,
             published_at = COALESCE(published_at, NOW())
      WHERE id = ? AND hidden = 0'
 );
-$ok->execute([$title, $author !== '' ? $author : null, $summary, $id]);
+$ok->execute([$title, $author !== '' ? $author : null, $notes !== '' ? $notes : null, $summary, $id]);
 if ($ok->rowCount() === 0) {
     $exists = $pdo->prepare('SELECT 1 FROM builds WHERE id = ?');
     $exists->execute([$id]);
