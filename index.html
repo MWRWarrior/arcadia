@@ -1482,6 +1482,17 @@ function quickAdd(slot){
 }
 
 function renderGear(){
+  // Rebuilding innerHTML would collapse open slots — remember which were open
+  // (and restore focus) so picking a secondary doesn't slam the panel shut.
+  const open=new Set(), qaOpen=new Set();
+  document.querySelectorAll("#gear details.slot[open]").forEach(d=>{
+    const name=d.querySelector(".slotname")?.textContent;
+    if(!name) return;
+    open.add(name);
+    if(d.querySelector("details.qa[open]")) qaOpen.add(name);
+  });
+  const focus=_gearFocus; _gearFocus=null;
+
   document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
     const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
     const libItem=g?libByName(g.item):null;
@@ -1495,7 +1506,7 @@ function renderGear(){
       const head=needsPick&&i===fixedN?pickNote:"";
       return head+rollRow(sl,i,r,needsPick&&i>=fixedN);
     }).join("")+(needsPick&&rolls.length<=fixedN?pickNote:"");
-    return `<details class="slot"><summary>
+    return `<details class="slot"${open.has(sl)?" open":""}><summary>
       <span class="slotname">${sl}</span>
       <span class="itemname ${g?'':'empty'}">${g?esc(g.item):(SLOT_HINT[sl]?'empty — '+SLOT_HINT[sl]:'empty')}</span>
       ${e?`<span class="ilvl">i${e.level}</span>`:''}${eff}</summary>
@@ -1505,7 +1516,7 @@ function renderGear(){
           <option value="">— load a documented ${sl} item (${lib.length}) —</option>
           ${lib.map((x,i)=>`<option value="${i}">${x.rarity?x.rarity[0].toUpperCase()+x.rarity.slice(1)+" · ":""}${x.name}${x.lvl?` (iL${x.lvl})`:""}</option>`).join("")}
         </select>`:""})()}
-        <details class="qa"><summary>Quick add — paste tooltip lines</summary>
+        <details class="qa"${qaOpen.has(sl)?" open":""}><summary>Quick add — paste tooltip lines</summary>
           <textarea id="qa_${sl.replace(/\s/g,'_')}" class="qabox" rows="4"
             placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed"></textarea>
           <button class="addbtn" onclick="quickAdd('${sl}')">Add these rolls</button>
@@ -1520,6 +1531,16 @@ function renderGear(){
         <button class="addbtn" onclick="addRoll('${sl}',0)">+ secondary</button>
         ${g?`<button class="addbtn" style="background:#2a1620;color:#e08596;border-color:#3a2330" onclick="clearSlot('${sl}')">clear</button>`:''}
       </div></details>`;}).join("");
+
+  if(focus&&focus.sl!=="__cmp"){
+    const slot=[...document.querySelectorAll("#gear details.slot")]
+      .find(d=>d.querySelector(".slotname")?.textContent===focus.sl);
+    const row=slot?.querySelectorAll(".rollrow")[focus.i];
+    const el=focus.which==="v"?row?.querySelector("input[type=number]")
+      :focus.which==="t"?row?.querySelector("select.tagsel")
+      :row?.querySelector("select:not(.tagsel)");
+    if(el){ el.focus(); if(el.select) try{ el.select(); }catch(e){} }
+  }
 }
 function rollRow(sl,i,r,isPick){
   const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
@@ -1710,11 +1731,23 @@ function clearCmp(){ S.compare={slot:S.compare.slot,item:"",rolls:[]}; save(); }
 function setLoadout(i,v){ S.loadout[i]=v; save(); }
 function setName(sl,v){ if(!S.gear[sl])S.gear[sl]={item:v,lv:0,rolls:[]}; S.gear[sl].item=v; persist(); }
 function setLv(sl,v){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]}; S.gear[sl].lv=+v||0; save(); }
-function setRoll(sl,i,f,v){ const r=gearOf(sl).rolls[i]; r[f]=f==='v'?(+v||0):v; save(); }
-function setTag(sl,i,tag){ const r=gearOf(sl).rolls[i]; if(tag)r.t=tag; else delete r.t; save(); }
-function delRoll(sl,i){ gearOf(sl).rolls.splice(i,1); save(); }
+let _gearFocus=null;
+function setRoll(sl,i,f,v){
+  const r=gearOf(sl).rolls[i]; r[f]=f==='v'?(+v||0):v;
+  // After picking a stat, jump to the value field; keep the slot open via renderGear.
+  if(sl!=="__cmp") _gearFocus={sl,i,which:f==="s"?"v":f};
+  save();
+}
+function setTag(sl,i,tag){
+  const r=gearOf(sl).rolls[i]; if(tag)r.t=tag; else delete r.t;
+  if(sl!=="__cmp") _gearFocus={sl,i,which:"t"};
+  save();
+}
+function delRoll(sl,i){ gearOf(sl).rolls.splice(i,1); if(sl!=="__cmp") _gearFocus={sl,i:Math.max(0,i-1),which:"s"}; save(); }
 function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]};
-  S.gear[sl].rolls.push(p?{s:ARMOUR.has(sl)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0}); save(); }
+  S.gear[sl].rolls.push(p?{s:ARMOUR.has(sl)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0});
+  if(sl!=="__cmp") _gearFocus={sl,i:S.gear[sl].rolls.length-1,which:"s"};
+  save(); }
 function clearSlot(sl){ S.gear[sl]=null; save(); }
 
 document.getElementById("shareBtn").onclick=shareLink;
