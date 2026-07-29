@@ -1552,32 +1552,47 @@ function sanitizeOcrValue(stat, value){
   const v=+value;
   if(!stat || isNaN(v)) return {v:0, flagged:true, note:"couldn't read a number"};
   const b=ROLL_BOUNDS[stat];
-  // Allow a little headroom above anything we've documented; unknown stats get a
-  // loose ceiling so we still catch the egregious "% → digit" blow-ups.
-  const hi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4):(AKEYS.includes(stat)?140:80);
-  const lo=b?Math.min(b.min*1.35, b.min-4):(AKEYS.includes(stat)?0:-120);
-  const inRange=v<=hi && v>=lo;
-  if(inRange) return {v, flagged:false};
+  // Single-line magnitude from documented rolls — used ONLY to decide whether a
+  // trailing digit looks like a misread "%". Do NOT reject high values against
+  // this: the game merges duplicate secondaries into one tooltip line, so OCR
+  // may see the sum of 2–3 rolls and we have no way to know.
+  const singleHi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4)
+                  :(AKEYS.includes(stat)?140:80);
+  const singleLo=b?Math.min(b.min*1.35, b.min-4):(AKEYS.includes(stat)?0:-120);
 
-  // "%" is often read as a trailing 4; a broken 0 sometimes becomes 8.
   const raw=String(Math.abs(v));
-  if(raw.length>=2 && /[48]$/.test(raw)){
+  const pctStat=!!(SEC[stat] && /%/.test(SEC[stat])) || /_pct$/.test(stat)
+    || ["critical_strike_damage","critical_strike_chance","attack_speed","dot_potency",
+        "aoe_radius","healing_power","cooldown_reduction","physical_damage"].includes(stat);
+
+  // "%" misread as a trailing digit (412 Dot → 41, 124 Crit → 12). Only rewrite
+  // when the OCR value is above a single-line ceiling and the shortened value
+  // looks like a normal single roll (repairHi is a bit looser than singleHi so
+  // a real 41% DoT still qualifies as the corrected form of OCR 412).
+  const repairHi=Math.max(singleHi, pctStat?55:singleHi);
+  if(pctStat && raw.length>=2 && Math.abs(v)>singleHi){
     const dropped=parseFloat(raw.slice(0,-1));
     if(!isNaN(dropped)){
       const cand=dropped*Math.sign(v||1);
-      if(cand<=hi && cand>=lo)
+      if(cand<=repairHi && cand>=singleLo && Math.abs(cand)>=0.5)
+        return {v:cand, flagged:false, fixed:true, was:v,
+          note:`corrected from OCR ${v} (trailing digit looked like a misread %)`};
+    }
+  }else if(raw.length>=2 && /4$/.test(raw) && Math.abs(v)>singleHi){
+    const dropped=parseFloat(raw.slice(0,-1));
+    if(!isNaN(dropped)){
+      const cand=dropped*Math.sign(v||1);
+      if(cand<=repairHi && cand>=singleLo)
         return {v:cand, flagged:false, fixed:true, was:v,
           note:`corrected from OCR ${v} (trailing digit looked like a misread %)`};
     }
   }
-  // Order-of-magnitude slip: +124 with max 41 → try /10.
-  if(Math.abs(v)>hi){
-    const scaled=Math.round((v/10)*100)/100;
-    if(scaled<=hi && scaled>=lo)
-      return {v:scaled, flagged:false, fixed:true, was:v, note:`corrected from OCR ${v}`};
-  }
-  const cap=b?b.max:hi;
-  return {v, flagged:true, note:`OCR ${v} is outside the observed range (highest documented: ${cap})`};
+
+  // Only refuse numbers that are absurd even as a merged stack of several lines.
+  // Threat is a special snowflake that legitimately rolls in the thousands.
+  if(stat!=="threat" && Math.abs(v)>Math.max(singleHi*5, 300))
+    return {v, flagged:true, note:`OCR ${v} is implausibly high even as stacked lines`};
+  return {v, flagged:false};
 }
 
 const RARITY_RE=/^(legendary|epic|rare|uncommon|common)\b/i;
@@ -1705,7 +1720,20 @@ function parseRollLine(line){
 
 function parseTooltipText(text){
   const raw=String(text||"").replace(/\r/g,"");
-  const lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  let lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  // Tooltips wrap "+1 additional / projectile" across two lines.
+  const stitched=[];
+  for(let i=0;i<lines.length;i++){
+    const a=lines[i], b=lines[i+1];
+    if(b && /additional$/i.test(a) && /^projectiles?$/i.test(b)){
+      stitched.push(a+" "+b); i++; continue;
+    }
+    if(b && /abilities have/i.test(a) && /projectile/i.test(b) && !/projectile/i.test(a)){
+      stitched.push(a+" "+b); i++; continue;
+    }
+    stitched.push(a);
+  }
+  lines=stitched;
   const skip=/^(primary|secondary|requires:?|press shift|compare|forged|found in|foundation-pattern|volatile)/i;
   let name=null, slot=null, rarity=null, lvl=null, section=null;
   const rolls=[], fxLines=[];
@@ -1720,6 +1748,14 @@ function parseTooltipText(text){
     const lm=line.match(/^level\s*[:.]?\s*(\d{1,3})\b/i)
           || line.match(/\blevel\s*[:.]?\s*(\d{1,3})\b/i);
     if(lm && +lm[1]>0 && +lm[1]<200){ lvl=+lm[1]; continue; }
+
+    // "abilities have +1 additional projectile" — unique fixed line, not a dropdown secondary.
+    const proj=line.match(/abilities have\s*\+?(\d+)\s+additional\s+projectiles?/i)
+             || line.match(/\+?(\d+)\s+additional\s+projectiles?/i);
+    if(proj && (section==="secondary" || section==="primary" || !section)){
+      rolls.push({s:"projectile_count",p:0,v:+proj[1]});
+      continue;
+    }
 
     const rarityHit=(()=>{
       const low=tipNorm(line);
@@ -1744,7 +1780,7 @@ function parseTooltipText(text){
         for(let j=i-1;j>=0;j--){
           if(skip.test(lines[j]) || RARITY_RE.test(lines[j]) || /^level\b/i.test(lines[j])) continue;
           if(parseRollLine(lines[j])) continue;
-          name=lines[j].replace(/^[^A-Za-z]+/,""); break;
+          name=lines[j].replace(/^[^A-Za-z]+/,"").replace(/[^A-Za-z0-9' -]+$/g,"").trim(); break;
         }
       }
       continue;
@@ -1774,7 +1810,7 @@ function parseTooltipText(text){
       if(!name && !RARITY_RE.test(line) && !/^level\b/i.test(line) && !skip.test(line) && /[A-Za-z]/.test(line)){
         // Prefer the longest early title-ish line as a candidate; first wins unless
         // a later line looks more like a full item name (3+ words).
-        const cand=line.replace(/^[^A-Za-z]+/,"");
+        const cand=line.replace(/^[^A-Za-z]+/,"").replace(/[^A-Za-z0-9' -]+$/g,"").trim();
         if(!name) name=cand;
         else if(cand.split(/\s+/).length>=3 && name.split(/\s+/).length<3) name=cand;
       }
@@ -1785,6 +1821,8 @@ function parseTooltipText(text){
   if(!lines.some(l=>/^primary$/i.test(l)||/^secondary$/i.test(l))){
     rolls.forEach(r=>{ r.p=AKEYS.includes(r.s)?1:0; });
   }
+
+  if(name) name=name.replace(/[^A-Za-z0-9' -]+$/g,"").trim();
 
   const lib=fuzzyLibMatch(name) || (()=>{
     // Fall back: score every line as a possible name against the library.
@@ -1805,6 +1843,8 @@ function parseTooltipText(text){
     name=lib.name;
     if(!slot) slot=lib.slot;
   }
+  // Name alone often encodes the slot when OCR ate "Epic Neck" / "Legendary Feet".
+  if(!slot && name) slot=normalizeSlotTip(name);
 
   return {
     name:name||"",
@@ -1949,22 +1989,29 @@ function applyShotImport(){
 async function loadTesseract(){
   if(window.Tesseract) return window.Tesseract;
   if(_tesseractReady) return _tesseractReady;
-  // Root-absolute on http(s) so /b/<id> short links still resolve the assets;
-  // relative when someone opens index.html as a local file.
-  const root=(location.protocol==="http:"||location.protocol==="https:")
-    ? "/vendor/tesseract" : "vendor/tesseract";
+  // Blob workers resolve importScripts against an opaque blob: base, so paths
+  // must be absolute http(s) URLs — "/vendor/..." throws "URL is invalid".
+  // file:// falls back to paths relative to index.html.
+  const abs=(p)=>{
+    if(location.protocol==="http:"||location.protocol==="https:")
+      return new URL(p, location.origin).href;
+    return p;
+  };
+  const root="vendor/tesseract";
   _tesseractReady=new Promise((resolve,reject)=>{
     const s=document.createElement("script");
-    s.src=root+"/tesseract.min.js";
+    s.src=abs("/"+root+"/tesseract.min.js");
+    if(location.protocol==="file:") s.src=root+"/tesseract.min.js";
     s.async=true;
     s.onload=()=>{
       if(!window.Tesseract){ reject(new Error("Tesseract missing")); return; }
-      // Stash paths on the API object so recognize() can find worker/core/lang
-      // without hitting a CDN.
+      const base=(location.protocol==="file:")
+        ? root
+        : abs("/"+root);
       window.Tesseract.__arcadiaPaths={
-        workerPath:root+"/worker.min.js",
-        corePath:root+"/core",
-        langPath:root+"/lang",
+        workerPath:base+"/worker.min.js",
+        corePath:base+"/core",
+        langPath:base+"/lang",
       };
       resolve(window.Tesseract);
     };
@@ -1982,10 +2029,11 @@ function loadImageFromBlob(blob){
     img.src=url;
   });
 }
-function prepTooltipImage(img){
-  // Nearest-neighbour upscale + hard threshold. Tesseract wants dark glyphs on a
-  // light field — our tooltips are the opposite, so invert after thresholding.
-  const scale=Math.max(3, Math.min(5, Math.ceil(900/Math.max(img.width,1))));
+function prepTooltipImage(img, invert){
+  // Nearest-neighbour upscale + hard threshold. Default invert → dark glyphs on
+  // light (Tesseract's preferred polarity); callers can also try the un-inverted
+  // pass when the first read is garbage.
+  const scale=Math.max(4, Math.min(8, Math.ceil(1200/Math.max(img.width,1))));
   const c=document.createElement("canvas");
   c.width=Math.max(1, Math.round(img.width*scale));
   c.height=Math.max(1, Math.round(img.height*scale));
@@ -1996,20 +2044,27 @@ function prepTooltipImage(img){
   const d=id.data;
   for(let i=0;i<d.length;i+=4){
     const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    // Orange name / cyan labels / white values clear this; dark panel does not.
-    // Invert: ink = dark, paper = white.
-    const v=y>48?0:255;
+    const on=y>48;
+    const v=invert?(on?0:255):(on?255:0);
     d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
   }
   ctx.putImageData(id,0,0);
   return c;
 }
 
+function ocrScore(parsed){
+  // Prefer library matches and more parsed rolls — used to pick between polarity passes.
+  let n=(parsed.rolls||[]).length;
+  if(parsed.lib) n+=8;
+  if(parsed.slot) n+=2;
+  if(parsed.name && parsed.name.length>6) n+=1;
+  return n;
+}
+
 async function ocrTooltipImage(img){
   const T=await loadTesseract();
-  const canvas=prepTooltipImage(img);
   const paths=T.__arcadiaPaths||{};
-  const result=await T.recognize(canvas,"eng",{
+  const opts={
     workerPath:paths.workerPath,
     corePath:paths.corePath,
     langPath:paths.langPath,
@@ -2022,8 +2077,19 @@ async function ocrTooltipImage(img){
         shotSetStatus("Starting OCR…");
       }
     },
-  });
-  return (result&&result.data&&result.data.text)||"";
+  };
+  // Try dark-on-light first; if that barely parses, fall back to light-on-dark.
+  const pass=async(invert)=>{
+    const canvas=prepTooltipImage(img, invert);
+    const result=await T.recognize(canvas,"eng",opts);
+    return (result&&result.data&&result.data.text)||"";
+  };
+  const textA=await pass(true);
+  const parsedA=parseTooltipText(textA);
+  if(ocrScore(parsedA)>=3) return textA;
+  shotSetStatus("Retrying OCR polarity…");
+  const textB=await pass(false);
+  return ocrScore(parseTooltipText(textB))>ocrScore(parsedA)?textB:textA;
 }
 
 async function handleShotBlob(blob){
