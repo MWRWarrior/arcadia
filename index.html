@@ -1548,48 +1548,31 @@ const ROLL_BOUNDS=(()=>{
   return m;
 })();
 
-function sanitizeOcrValue(stat, value){
+function isPctStat(stat){
+  return !!(SEC[stat] && /%/.test(SEC[stat])) || /_pct$/.test(stat);
+}
+
+function sanitizeOcrValue(stat, value, hadPct){
   const v=+value;
   if(!stat || isNaN(v)) return {v:0, flagged:true, note:"couldn't read a number"};
-  const b=ROLL_BOUNDS[stat];
-  // Single-line magnitude from documented rolls — used ONLY to decide whether a
-  // trailing digit looks like a misread "%". Do NOT reject high values against
-  // this: the game merges duplicate secondaries into one tooltip line, so OCR
-  // may see the sum of 2–3 rolls and we have no way to know.
-  const singleHi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4)
-                  :(AKEYS.includes(stat)?140:80);
-  const singleLo=b?Math.min(b.min*1.35, b.min-4):(AKEYS.includes(stat)?0:-120);
 
+  // Primary signal: a % secondary whose OCR line has no "%" almost always ate the
+  // glyph into a trailing digit (+12% → +124, +41% → +412). Value size is not a
+  // reliable check — the game merges duplicate secondaries into one tooltip line
+  // (e.g. 2× DoT shows as a single +20.50%), so a "high" total can be legit.
+  // Only rewrite whole integers (decimals like 20.50 kept their shape).
   const raw=String(Math.abs(v));
-  const pctStat=!!(SEC[stat] && /%/.test(SEC[stat])) || /_pct$/.test(stat)
-    || ["critical_strike_damage","critical_strike_chance","attack_speed","dot_potency",
-        "aoe_radius","healing_power","cooldown_reduction","physical_damage"].includes(stat);
-
-  // "%" misread as a trailing digit (412 Dot → 41, 124 Crit → 12). Only rewrite
-  // when the OCR value is above a single-line ceiling and the shortened value
-  // looks like a normal single roll (repairHi is a bit looser than singleHi so
-  // a real 41% DoT still qualifies as the corrected form of OCR 412).
-  const repairHi=Math.max(singleHi, pctStat?55:singleHi);
-  if(pctStat && raw.length>=2 && Math.abs(v)>singleHi){
-    const dropped=parseFloat(raw.slice(0,-1));
-    if(!isNaN(dropped)){
-      const cand=dropped*Math.sign(v||1);
-      if(cand<=repairHi && cand>=singleLo && Math.abs(cand)>=0.5)
-        return {v:cand, flagged:false, fixed:true, was:v,
-          note:`corrected from OCR ${v} (trailing digit looked like a misread %)`};
-    }
-  }else if(raw.length>=2 && /4$/.test(raw) && Math.abs(v)>singleHi){
-    const dropped=parseFloat(raw.slice(0,-1));
-    if(!isNaN(dropped)){
-      const cand=dropped*Math.sign(v||1);
-      if(cand<=repairHi && cand>=singleLo)
-        return {v:cand, flagged:false, fixed:true, was:v,
-          note:`corrected from OCR ${v} (trailing digit looked like a misread %)`};
-    }
+  if(isPctStat(stat) && !hadPct && /^\d+$/.test(raw) && raw.length>=2){
+    const cand=parseFloat(raw.slice(0,-1))*Math.sign(v||1);
+    if(!isNaN(cand) && Math.abs(cand)>=0.5)
+      return {v:cand, flagged:false, fixed:true, was:v,
+        note:`corrected from OCR ${v} (% missing on a % stat — stripped trailing digit)`};
   }
 
-  // Only refuse numbers that are absurd even as a merged stack of several lines.
-  // Threat is a special snowflake that legitimately rolls in the thousands.
+  // Weak secondary: refuse only values that are absurd even as a merged stack.
+  const b=ROLL_BOUNDS[stat];
+  const singleHi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4)
+                  :(AKEYS.includes(stat)?140:80);
   if(stat!=="threat" && Math.abs(v)>Math.max(singleHi*5, 300))
     return {v, flagged:true, note:`OCR ${v} is implausibly high even as stacked lines`};
   return {v, flagged:false};
@@ -1713,7 +1696,7 @@ function parseRollLine(line){
   // (e.g. "-100% Link Count" → link_count_pct, same pattern as Dot Potency).
   if(hadPct && SEC[stat] && !/%/.test(SEC[stat]) && SEC[stat+"_pct"]) stat=stat+"_pct";
   const isAttr=AKEYS.includes(stat);
-  const roll={s:stat,p:isAttr?1:0,v:value};
+  const roll={s:stat,p:isAttr?1:0,v:value,hadPct:!!hadPct};
   if(!isAttr && tag) roll.t=tag;
   return roll;
 }
@@ -1859,7 +1842,7 @@ function parseTooltipText(text){
 }
 
 function annotateOcrRoll(r){
-  const san=sanitizeOcrValue(r.s, r.v);
+  const san=sanitizeOcrValue(r.s, r.v, r.hadPct);
   const o={s:r.s, p:r.p?1:0, v:san.flagged?0:san.v, src:"ocr"};
   if(r.t) o.t=r.t;
   if(san.flagged){ o.flagged=true; o.ocrV=r.v; o.note=san.note; }
