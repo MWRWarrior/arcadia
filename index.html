@@ -492,7 +492,7 @@
         <div class="shot" id="shotZone" tabindex="0"
              aria-label="Drop or paste an item tooltip screenshot">
           <div class="shot-top">
-            <span class="shot-hint">Drop a tooltip screenshot here, paste with <b>Ctrl+V</b>, or pick a file. Matched library items fill fixed rolls; random secondaries come from the image.</span>
+            <span class="shot-hint">Drop a tooltip screenshot here, paste with <b>Ctrl+V</b>, or pick a file. Matched library items fill fixed rolls; random secondaries come from the image — double-check the values and edit as needed.</span>
             <button type="button" class="addbtn" id="shotPaste">Paste screenshot</button>
             <button type="button" class="addbtn" id="shotFile">Upload image</button>
             <input type="file" id="shotInput" accept="image/*" hidden>
@@ -552,7 +552,7 @@
         <div id="procs"></div>
       </details>
       <details class="card ref">
-        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 102 items</span></h2></summary>
+        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 103 items</span></h2></summary>
         <label class="sr-only" for="itemq">Filter items</label>
         <input id="itemq" type="search" placeholder="filter — try &quot;t5 head&quot;, &quot;lunar&quot;, &quot;staff&quot;"
                oninput="renderItemDb()" style="width:100%;margin-bottom:8px">
@@ -656,6 +656,7 @@ const GEAR_LIB = [
   {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
   {"slot":"Arms","name":"Viridium Yoku Hammer","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+100% threat generation briefly"},"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12}]},
+  {"slot":"Arms","name":"Viridium Yoku Staff","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on impact end","scope":"pyrosphere","effect":"Hit 5+ enemies with Pyrosphere to create a shockwave from the impact"},"rolls":[{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12},{"s":"ferocity","p":1,"v":12}]},
   /* Fixed: primaries + unique Link Count lines. rolledSec = random secondaries
      (CDR, Healing Power, Dot Potency, …) — not hardcoded; picker fills them in. */
   {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolledSec":2,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"link_count_pct","p":0,"v":-100.0},{"s":"link_count","p":0,"v":8.0}]},
@@ -755,7 +756,7 @@ const PROCS=[
  {pat:"t4 heavy Neotilus", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability", name:"Tritanium Hammer"},
  {pat:"t4 staff Lunar", trigger:"on crit", effect:"Power buff to void abilities", scope:"void", chance:100, buffs:true, id:"legendary_void_crit_power_buff_ability"},
  {pat:"t5 greatsword Neotilus", trigger:"on enemy hit", effect:"Chill DEBUFF on the enemy", scope:"melee", chance:100, id:"legendary_melee_chill_debuff"},
- {pat:"t5 staff Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"pyrosphere", chance:100, id:"legendary_pyrosphere_5hit_shockwave"},
+ {pat:"t5 staff Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"pyrosphere", chance:100, id:"legendary_pyrosphere_5hit_shockwave", name:"Viridium Yoku Staff"},
 ];
 
 /* Legendaries confirmed to carry NO proc, so a blank can be trusted rather than
