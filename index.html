@@ -257,8 +257,13 @@
   .shot-rolls li.ocr .k{color:var(--cyan)}
   .shot-rolls li.bad{color:var(--red)}
   .shot-rolls li.bad .k{color:var(--red)}
+  .shot-rolls li.uncertain{color:var(--gold)}
+  .shot-value{width:64px;margin:0 5px 0 1px;padding:2px 5px;background:var(--void);
+    border:1px solid var(--edge2);color:var(--ink);font:inherit;font-size:12.5px}
+  .shot-value:focus{border-color:var(--amber-dim);outline:none}
   .shot-rolls li .note{display:block;font-size:11.5px;color:var(--faint);margin:1px 0 4px 2.6em}
   .shot-rolls li.bad .note{color:#e08596}
+  .shot-rolls li.uncertain .note{color:var(--gold)}
   .shot-warn{margin-top:8px;font-size:12.5px;color:var(--gold);line-height:1.45}
   .shot-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
   .shot details.raw{margin-top:8px}
@@ -499,7 +504,7 @@
         <div class="shot" id="shotZone" tabindex="0"
              aria-label="Drop or paste an item tooltip screenshot">
           <div class="shot-top">
-            <span class="shot-hint">Drop a tooltip screenshot here, paste with <b>Ctrl+V</b>, or pick a file. Matched library items fill fixed rolls; random secondaries come from the image — double-check the values and edit as needed.</span>
+            <span class="shot-hint">Drop a tooltip screenshot here, paste with <b>Ctrl+V</b>, or pick a file. Reads on your device — nothing is uploaded. Matched library items fill fixed rolls; random secondaries come from the image — double-check the values and edit as needed.</span>
             <button type="button" class="addbtn" id="shotPaste">Paste screenshot</button>
             <button type="button" class="addbtn" id="shotFile">Upload image</button>
             <input type="file" id="shotInput" accept="image/*" hidden>
@@ -559,7 +564,7 @@
         <div id="procs"></div>
       </details>
       <details class="card ref">
-        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 103 items</span></h2></summary>
+        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 107 items</span></h2></summary>
         <label class="sr-only" for="itemq">Filter items</label>
         <input id="itemq" type="search" placeholder="filter — try &quot;t5 head&quot;, &quot;lunar&quot;, &quot;staff&quot;"
                oninput="renderItemDb()" style="width:100%;margin-bottom:8px">
@@ -674,10 +679,13 @@ const GEAR_LIB = [
   {"slot":"Chest","name":"Ferrox Plate Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"precision","p":1,"v":9},{"s":"will","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":26.0},{"s":"attack_speed","p":0,"v":6.6},{"s":"physical_damage","p":0,"v":6.6}]},
   {"slot":"Chest","name":"Voltscale Chest","rarity":"epic","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"attack_speed","p":0,"v":6.3},{"s":"physical_damage","p":0,"v":6.3},{"s":"heavy_hit_chance","p":0,"v":6.3}]},
   {"slot":"Chest","name":"Legendary chest (iL64)","rarity":"legendary","lvl":64,"fx":{"trigger":"on crit","scope":"gun","effect":"Power buff to your gun abilities — Gleam Twins, Minigun and Machinegun"},"rolls":[{"s":"vitality","p":1,"v":40},{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"critical_strike_chance","p":0,"v":7.2},{"s":"critical_strike_damage","p":0,"v":31}]},
+  {"slot":"Chest","name":"Midnight Kimono","rarity":"epic","lvl":64,"rolledSec":3,"rolls":[{"s":"vitality","p":1,"v":48},{"s":"precision","p":1,"v":12},{"s":"will","p":1,"v":12}]},
   {"slot":"Chest","name":"Virelda Warcrest Cuirass","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+3% Physical damage for 5s, stacking up to 10"},"rolls":[{"s":"power","p":1,"v":15},{"s":"ferocity","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Chest","name":"Neotilus Trailseeker Coat","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on crit","scope":"explosive","effect":"10% chance to grant +1 Drone for 10s"},"rolls":[{"s":"power","p":1,"v":15},{"s":"precision","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
+  {"slot":"Chest","name":"Lunar Conduit Robe","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on chain lightning hit","scope":"lightning","effect":"+8% Lightning damage for 5s, stacking up to 10"},"rolls":[{"s":"will","p":1,"v":15},{"s":"focus","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Chest","name":"Necrotic Warrior Plate","rarity":"legendary","lvl":91,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58},{"s":"critical_strike_damage","p":0,"v":41.0},{"s":"attack_speed","p":0,"v":8.5}]},
   {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
+  {"slot":"Feet","name":"Dark Obsidian Legs","rarity":"epic","lvl":64,"rolledSec":3,"rolls":[{"s":"vitality","p":1,"v":40},{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12}]},
   /* Observed sample always showed these secondaries — treat as fixed until proven otherwise. */
   {"slot":"Feet","name":"Voltscale Legguards","rarity":"legendary","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"critical_strike_chance","p":0,"v":7.0},{"s":"critical_strike_chance","p":0,"v":5.0,"t":"gun"},{"s":"critical_strike_damage","p":0,"v":28.0}]},
   {"slot":"Feet","name":"Foundation Bulwark Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on enemy hit","scope":"","effect":"1% chance to heal you for 1 HP"},"rolls":[{"s":"power","p":1,"v":15},{"s":"will","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
@@ -689,8 +697,9 @@ const GEAR_LIB = [
   {"slot":"Head","name":"Virelda Warcrest Helm","rarity":"legendary","lvl":50,"rolls":[{"s":"power","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"vitality","p":1,"v":26},{"s":"attack_speed","p":0,"v":8.0},{"s":"health","p":0,"v":80.0}]},
   {"slot":"Head","name":"Neotilus Trailseeker Visor","rarity":"legendary","lvl":50,"rolledSec":2,"fx":{"trigger":"on enemy kill","scope":"gun","effect":"5% chance to spawn a mini-minigun around you"},"rolls":[{"s":"power","p":1,"v":12},{"s":"precision","p":1,"v":12},{"s":"vitality","p":1,"v":26}]},
   {"slot":"Head","name":"Necrotic Warrior Crown","rarity":"legendary","lvl":54,"rolls":[{"s":"power","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"vitality","p":1,"v":28},{"s":"attack_speed","p":0,"v":8.8},{"s":"duration","p":0,"v":39.0},{"s":"aoe_radius","p":0,"v":200.0}]},
+  {"slot":"Head","name":"Lunar Conduit Crown","rarity":"epic","lvl":54,"rolledSec":3,"fx":{"trigger":"on heavy hit","scope":"pyrosphere","effect":"Fire nova"},"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"vitality","p":1,"v":28}]},
   {"slot":"Neck","name":"Gunner's Pendant","rarity":"rare","lvl":0,"rolls":[{"s":"duration","p":0,"v":50.0}]},
-  /* Unique line is fixed on every rarity; the other three secondaries are random. */
+  /* Unique line is fixed; legendary rolls 3 more secondaries, epic/rare usually 2. */
   {"slot":"Ring 1","name":"Double Tap Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"shots_per_tick","p":0,"v":100,"t":"gun"}]},
   {"slot":"Ring 1","name":"Pyrosphere Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"projectile_count","p":0,"v":1,"t":"pyrosphere"}]},
   {"slot":"Ring 1","name":"Catalyst Ring","rarity":"legendary","lvl":0,"rolledSec":3,"rolls":[{"s":"dot_interval","p":0,"v":-50.0}]},
@@ -747,7 +756,7 @@ const PROCS=[
  {pat:"t4 head Foundation", trigger:"on heavy hit", effect:"Knockback buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_knockback_buff_ability"},
  {pat:"t4 head Virelda", trigger:"on crit", effect:"Explosion radius buff", scope:"", chance:100, buffs:true, id:"legendary_crit_explosion_radius_buff_ability"},
  {pat:"t5 chest Foundation", trigger:"on enemy kill", effect:"Power buff to cold abilities", scope:"cold", chance:100, buffs:true, id:"legendary_kill_cold_power_buff_ability"},
- {pat:"t5 chest Lunar", trigger:"on enemy hit", effect:"Power buff to chain lightning", scope:"chain_lightning", chance:100, buffs:true, id:"legendary_lightning_hit_power_buff_ability"},
+ {pat:"t5 chest Lunar", trigger:"on chain lightning hit", effect:"+8% Lightning damage for 5s, stacking up to 10", scope:"lightning", chance:100, buffs:true, id:"legendary_lightning_hit_power_buff_ability", name:"Lunar Conduit Robe"},
  {pat:"t5 chest Neotilus", trigger:"on crit", effect:"Drone buff", scope:"explosive", chance:10, buffs:true, id:"legendary_explosive_crit_drone_buff_ability", name:"Neotilus Trailseeker Coat"},
  {pat:"t5 feet Foundation", trigger:"on enemy hit", effect:"Heal 1 HP", scope:"", chance:1, id:"legendary_on_hit_1hp_heal", name:"Foundation Bulwark Greaves"},
  {pat:"t5 feet Virelda", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability", name:"Virelda Warcrest Greaves"},
@@ -1512,14 +1521,20 @@ const STAT_ALIASES = (()=>{
     "critical strike damage":"critical_strike_damage", "critical strike chance":"critical_strike_chance",
     "heavy hit chance":"heavy_hit_chance", hhc:"heavy_hit_chance",
     "heavy hit damage":"heavy_hit_damage", hhd:"heavy_hit_damage",
+    pracision:"precision", pricision:"precision",
+    ljill:"will", jill:"will", lil:"will", witality:"vitality", yitality:"vitality",
+    "qos radius":"aoe_radius", qos:"aoe_radius", "our ation":"duration", ouration:"duration",
     "attack speed":"attack_speed", "atk speed":"attack_speed", as:"attack_speed",
     "cooldown reduction":"cooldown_reduction", cdr:"cooldown_reduction", cooldown:"cooldown_reduction",
+    "cooldown raduction":"cooldown_reduction", raduction:"cooldown_reduction",
     "healing power":"healing_power", "healing pwr":"healing_power",
+    "haaling power":"healing_power", haaling:"healing_power",
     "shielding power":"shielding_power", "shield pwr":"shielding_power",
     "health regeneration":"health_regen", "health regen":"health_regen", "hp regen":"health_regen",
     "max health":"health", "max hp":"health", hp:"health",
     "aoe radius":"aoe_radius", aoe:"aoe_radius",
-    "dot potency":"dot_potency", "physical damage":"physical_damage", "physical dmg":"physical_damage",
+    "dot potency":"dot_potency", "oot potency":"dot_potency", oot:"dot_potency",
+    "physical damage":"physical_damage", "physical dmg":"physical_damage",
     "void damage":"void_damage", "void dmg":"void_damage", "fire damage":"fire_damage",
     "cold damage":"cold_damage", "lightning damage":"lightning_damage",
     "poison damage":"poison_damage", "explosive damage":"explosive_damage",
@@ -1549,33 +1564,244 @@ const ROLL_BOUNDS=(()=>{
 })();
 
 function isPctStat(stat){
-  return !!(SEC[stat] && /%/.test(SEC[stat])) || /_pct$/.test(stat);
+  if(!stat) return false;
+  if(/_pct$/.test(stat)) return true;
+  if(SEC[stat] && /%/.test(SEC[stat])) return true;
+  // Shown with "%" on tooltips even when our SEC label is flat / unitless.
+  return stat==="aoe_radius" || stat==="dot_potency" || stat==="catch_radius";
+}
+
+function typicalPctMid(stat){
+  const b=ROLL_BOUNDS[stat];
+  if(!b) return 15;
+  // Ignore outliers like AoE 200 on a crown when picking a "typical" mid.
+  const hi=Math.min(Math.abs(b.max), 60);
+  const lo=Math.min(Math.abs(b.min), hi);
+  return (lo+hi)/2;
+}
+
+/* Pixel font: the "0" in "0%" often reads as "8" (+7.50%→758, +20.50%→…58,
+   +5.90%→5.98). Extra glued digit: +5.90%→5.908. */
+function snapOcrZeroPct(v){
+  const sign=Math.sign(v||1);
+  const cents=Math.round(Math.abs(v)*100);
+  if(cents%10===8) return sign*((cents-8)/100);
+  return Math.round(v*100)/100;
+}
+function snapOcrPctDecimal(v){
+  const sign=Math.sign(v||1);
+  let x=Math.abs(v);
+  const parts=String(x).split(".");
+  if(parts[1] && parts[1].length>=3)
+    x=parseFloat(parts[0]+"."+parts[1].slice(0,2));
+  return snapOcrZeroPct(sign*x);
+}
+
+/* Common Soulbound secondary fractional steps — used to break ties when OCR
+   inserted an extra digit (+20.50% → 26058). Includes values seen in GEAR_LIB. */
+function ocrPctFracPenalty(v){
+  const f=Math.round((Math.abs(v)%1)*100)/100;
+  const common=[0,0.05,0.1,0.2,0.25,0.3,0.35,0.5,0.6,0.65,0.75,0.8];
+  return common.some(c=>Math.abs(f-c)<0.001)?0:1;
+}
+
+/* Pixel zeros / lookalikes: 8|6→0 (+10.50%→1856), 5↔3 (+3.50%→556). */
+function ocrDigitConfusions(raw){
+  const pairs=[["8","0"],["6","0"],["5","3"]];
+  const out=new Set([String(raw)]);
+  for(let pass=0; pass<2; pass++){
+    for(const s of [...out]){
+      for(let i=0;i<s.length;i++){
+        for(const [a,b] of pairs){
+          if(s[i]===a) out.add(s.slice(0,i)+b+s.slice(i+1));
+          if(s[i]===b) out.add(s.slice(0,i)+a+s.slice(i+1));
+        }
+      }
+    }
+  }
+  return [...out];
+}
+function ocrZeroRestoreVariants(raw){
+  return ocrDigitConfusions(raw);
+}
+
+function restoreMangledPctInteger(raw, mid){
+  // Last two digits are the hundredths (with 0%→8); leading digits are the
+  // whole number, possibly with one extra OCR glyph (+20.50% → 260 + 58).
+  // Also try 8/6→0 variants (+10.50% → 1856).
+  const cands=[];
+  const pushCand=(v, zeros)=>{
+    if(v==null || isNaN(v)) return;
+    cands.push({v, zeros:zeros||0});
+  };
+  for(const r0 of ocrZeroRestoreVariants(raw)){
+    const zeros=[...raw].filter((ch,i)=>ch!==r0[i]).length;
+    const lo=r0.slice(-2);
+    let fracDigits=parseInt(lo,10);
+    if(isNaN(fracDigits)) continue;
+    if(fracDigits%10===8) fracDigits-=8;
+    else if(fracDigits%10===6) fracDigits-=6;
+    const frac=fracDigits/100;
+    const hi=r0.slice(0,-2);
+    const pushWhole=h=>{
+      if(!h || !/^\d+$/.test(h)) return;
+      const whole=parseInt(h,10);
+      if(isNaN(whole)) return;
+      pushCand(whole+frac, zeros);
+    };
+    pushWhole(hi);
+    for(let i=0;i<hi.length;i++) pushWhole(hi.slice(0,i)+hi.slice(i+1));
+    if(r0.length===4) pushCand(parseFloat(r0)/100, zeros);
+    if(r0.length===5){
+      for(let i=0;i<5;i++){
+        const four=r0.slice(0,i)+r0.slice(i+1);
+        pushCand(parseFloat(four)/100, zeros);
+      }
+    }
+  }
+  const scored=cands
+    .map(({v,zeros})=>({c:snapOcrPctDecimal(v), zeros}))
+    .filter(x=>!isNaN(x.c) && x.c>=0.5 && x.c<=120)
+    .map(x=>({c:x.c, zeros:x.zeros, pen:ocrPctFracPenalty(x.c), dist:Math.abs(x.c-mid)}));
+  // Prefer common .XX steps, then more digit restorations, then near typical mid.
+  scored.sort((a,b)=>a.pen-b.pen || b.zeros-a.zeros || a.dist-b.dist);
+  return scored[0]?scored[0].c:null;
+}
+
+/* 3-digit % blobs: +12%→124 / +41%→412 (strip) vs +2.80%→280 / +3.50%→556 (/100
+   after 5↔3, 6↔0). Score strip vs /100 across digit-confusion variants. */
+function looksLikeDroppedDecimal(raw){
+  const last2=parseInt(String(raw).slice(-2),10);
+  if(isNaN(last2)) return false;
+  const base=last2%10===8?last2-8:last2%10===6?last2-6:last2;
+  return [0,5,25,50,65,75,80].includes(last2) || [0,5,25,50,65,75,80].includes(base);
+}
+function pick3DigitPctRepair(raw, mid){
+  const scored=[];
+  const decimalish=looksLikeDroppedDecimal(raw);
+  const push=(c, zeros)=>{
+    if(c==null || isNaN(c) || c<0.5 || c>120) return;
+    const v=snapOcrPctDecimal(c);
+    // When the last two digits look like hundredths (.50/.80/…), a large
+    // strip (556→55) is usually wrong — prefer /100 restorations (+3.50%).
+    const band=(decimalish && v>=40)?1:0;
+    scored.push({c:v, zeros:zeros||0, pen:ocrPctFracPenalty(v), band,
+                 dist:Math.abs(v-mid)});
+  };
+  for(const r of ocrDigitConfusions(raw)){
+    const zeros=[...String(raw)].filter((ch,i)=>ch!==r[i]).length;
+    push(parseFloat(r.slice(0,-1)), zeros);
+    push(parseFloat(r)/100, zeros);
+  }
+  scored.sort((a,b)=>{
+    if(a.pen!==b.pen) return a.pen-b.pen;
+    if(a.band!==b.band) return a.band-b.band;
+    // Prefer an unedited reading when it's already a clean common step
+    // (252→25 over confusion 232→23), but allow edits when needed (556→3.50).
+    const aClean=(a.zeros===0 && a.pen===0 && a.band===0)?0:1;
+    const bClean=(b.zeros===0 && b.pen===0 && b.band===0)?0:1;
+    if(aClean!==bClean) return aClean-bClean;
+    return a.dist-b.dist || a.zeros-b.zeros;
+  });
+  return scored[0]?scored[0].c:null;
 }
 
 function sanitizeOcrValue(stat, value, hadPct){
+  // Kept for known pixel-font failure modes; prefer better preprocess + closed-set
+  // label matching over growing this further (DoE lesson).
   const v=+value;
   if(!stat || isNaN(v)) return {v:0, flagged:true, note:"couldn't read a number"};
 
-  // Primary signal: a % secondary whose OCR line has no "%" almost always ate the
-  // glyph into a trailing digit (+12% → +124, +41% → +412). Value size is not a
-  // reliable check — the game merges duplicate secondaries into one tooltip line
-  // (e.g. 2× DoT shows as a single +20.50%), so a "high" total can be legit.
-  // Only rewrite whole integers (decimals like 20.50 kept their shape).
   const raw=String(Math.abs(v));
-  if(isPctStat(stat) && !hadPct && /^\d+$/.test(raw) && raw.length>=2){
-    const cand=parseFloat(raw.slice(0,-1))*Math.sign(v||1);
-    if(!isNaN(cand) && Math.abs(cand)>=0.5)
-      return {v:cand, flagged:false, fixed:true, was:v,
-        note:`corrected from OCR ${v} (% missing on a % stat — stripped trailing digit)`};
+  const sign=Math.sign(v||1);
+  const mid=typicalPctMid(stat);
+
+  // % present (or OCR ":" for %) but decimal lost: +20.50% → 2050 / 26058, or
+  // +2.80% → 280.
+  if(isPctStat(stat) && hadPct && /^\d+$/.test(raw) && raw.length>=3){
+    const pick=raw.length>=4
+      ? restoreMangledPctInteger(raw, mid)
+      : pick3DigitPctRepair(raw, mid);
+    if(pick!=null && !isNaN(pick))
+      return {v:Math.round(pick*sign*100)/100, flagged:false, fixed:true, was:v,
+        note:`corrected from OCR ${v} (mangled % decimal)`};
   }
 
-  // Weak secondary: refuse only values that are absurd even as a merged stack.
+  // Primary signal: % secondary whose OCR line has no "%". The glyph was eaten
+  // into the number — trailing digit (+12%→+124, +41%→+412), and sometimes the
+  // decimal vanishes too (+7.50%→+758, +2.80%→+280, +20.50%→+2050).
+  if(isPctStat(stat) && !hadPct && /^\d+$/.test(raw) && raw.length>=2){
+    const strip=parseFloat(raw.slice(0,-1));
+    const d10=Math.abs(v)/10;
+    let pick=null;
+    if(raw.length>=4){
+      pick=snapOcrZeroPct(Math.abs(v)/100);
+    }else if(raw.length===3){
+      pick=pick3DigitPctRepair(raw, mid);
+    }else{
+      // 2 digits: % usually vanished cleanly (keep 12, 41). Only /10 when the
+      // integer is too large for a real % roll (8.8%→88, 7.5%→75).
+      if(Math.abs(v)<=55) return {v, flagged:false};
+      pick=snapOcrZeroPct(d10);
+    }
+    if(!isNaN(pick) && Math.abs(pick)>=0.5 && Math.abs(pick)<=120)
+      return {v:Math.round(pick*sign*100)/100, flagged:false, fixed:true, was:v,
+        note:`corrected from OCR ${v} (% missing on a % stat)`};
+  }
+
+  // Weak secondary: refuse only values absurd even as a merged stack.
   const b=ROLL_BOUNDS[stat];
   const singleHi=b?Math.max(Math.abs(b.max)*1.35, Math.abs(b.max)+4)
                   :(AKEYS.includes(stat)?140:80);
   if(stat!=="threat" && Math.abs(v)>Math.max(singleHi*5, 300))
     return {v, flagged:true, note:`OCR ${v} is implausibly high even as stacked lines`};
+
+  // Decimal kept but trailing 0→8 (+5.90%→5.98) or % glued as extra digit
+  // (+5.908). Do not change a plausible whole digit (3.50 → 4.50) here;
+  // plausible neighbours are presented for manual confirmation in the preview.
+  if(isPctStat(stat) && !/^\d+$/.test(raw)){
+    const snapped=snapOcrPctDecimal(v);
+    if(snapped!==v && Math.abs(snapped-v)<1.05+Math.abs(v)*0.02)
+      return {v:snapped, flagged:false, fixed:true, was:v,
+        note:`corrected from OCR ${v} (0%→8 / extra decimal digit)`};
+  }
   return {v, flagged:false};
+}
+
+/* Plausible one-glyph alternatives for Soulbound's pixel font. These are hints,
+   never automatic replacements: 48 may really be 48, or its 8 may be a 0. */
+function plausibleOcrAlternatives(stat, value){
+  const v=+value;
+  if(!stat || !isFinite(v) || !v) return [];
+  const sign=Math.sign(v);
+  const raw=String(Math.abs(v));
+  const swaps={8:["0"],0:["8","6"],3:["5"],5:["3"],6:["0"]};
+  const out=new Set();
+  for(let i=0;i<raw.length;i++){
+    const reps=swaps[raw[i]]||[];
+    for(const ch of reps){
+      const s=raw.slice(0,i)+ch+raw.slice(i+1);
+      if(!/^\d+(?:\.\d+)?$/.test(s)) continue;
+      const n=Math.round(parseFloat(s)*sign*1000)/1000;
+      if(!isFinite(n) || n===v || n===0) continue;
+      const b=ROLL_BOUNDS[stat];
+      const max=b?Math.max(Math.abs(b.max)*1.5,Math.abs(b.max)+5)
+                 :(AKEYS.includes(stat)?140:150);
+      if(Math.abs(n)<=max) out.add(n);
+    }
+  }
+  // A split decimal can lose/misread its whole digit ("2.50" vs "3.50").
+  // Keep both neighbours as suggestions; never select one automatically.
+  if(isPctStat(stat) && raw.includes(".")){
+    const abs=Math.abs(v), whole=Math.floor(abs);
+    const frac=Math.round((abs-whole)*100)/100;
+    if([0,0.25,0.5,0.8].includes(frac)){
+      if(whole>0) out.add(Math.round(sign*(whole-1+frac)*1000)/1000);
+      out.add(Math.round(sign*(whole+1+frac)*1000)/1000);
+      out.delete(0);
+    }
+  }
+  return [...out].sort((a,b)=>Math.abs(a-v)-Math.abs(b-v)).slice(0,4);
 }
 
 const RARITY_RE=/^(legendary|epic|rare|uncommon|common)\b/i;
@@ -1590,7 +1816,10 @@ const SLOT_FROM_TIP={
 };
 
 function tipNorm(s){
-  return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();
+  // Drop apostrophes so "Gunner's" → "gunners" (not "gunner s") — a lone "s"
+  // token was matching OCR garbage like "T= T= (we r==S (S".
+  return String(s||"").toLowerCase().replace(/[''′]/g,"")
+    .replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();
 }
 function tipLev(a,b){
   a=tipNorm(a); b=tipNorm(b);
@@ -1611,7 +1840,7 @@ function tipLev(a,b){
 }
 function fixOcrNumberToken(tok){
   // Only rewrite lookalikes inside a numeric token — never touch stat names.
-  return tok.replace(/[Il|]/g,"1").replace(/[Oo]/g,"0").replace(/[Ss]/g,"5")
+  return tok.replace(/[Il|]/g,"1").replace(/[Oo@]/g,"0").replace(/[Ss]/g,"5")
              .replace(/[Bb]/g,"8").replace(/[Zz]/g,"2").replace(/,/g,"");
 }
 function normalizeSlotTip(raw){
@@ -1624,23 +1853,81 @@ function normalizeSlotTip(raw){
   if(SLOTS.includes(raw)) return raw;
   return null;
 }
+function looksLikeItemNameLine(line){
+  const q=tipNorm(line);
+  if(q.length<5) return false;
+  if(/^(primary|secondary|sacondary|frimary|prirnary|requires|press|found|forged)/i.test(q)) return false;
+  const letters=((String(line).match(/[A-Za-z]/g))||[]).length;
+  return letters>=Math.max(4, Math.ceil(String(line).length*0.45));
+}
 function fuzzyLibMatch(name){
-  const q=tipNorm(name); if(!q || q.length<3) return null;
+  const q=tipNorm(name); if(!q || q.length<4) return null;
+  // Pixel font often splits words: "Lh nar To duit Robe" → lunar conduit robe.
+  const qRepaired=q
+    .replace(/\blh\s*nar\b/g,"lunar")
+    .replace(/\bto\s*duit\b/g,"conduit")
+    .replace(/\bduit\b/g,"conduit");
   let best=null, bestScore=Infinity;
   for(const g of GEAR_LIB){
     const n=tipNorm(g.name);
-    let score=tipLev(n,q);
-    // Prefer containment when OCR drops a word or adds junk around the name.
-    if(n.includes(q) || q.includes(n)) score=Math.min(score, Math.abs(n.length-q.length)*0.25);
-    // Token overlap: "foundation bulwark greaves" vs OCR "Foundation Bulwark Greaves"
-    const nt=new Set(n.split(" ")), qt=q.split(" ");
-    const hit=qt.filter(t=>nt.has(t)).length;
-    if(hit>=2) score=Math.min(score, (nt.size-hit)+Math.max(0,qt.length-hit)*0.5);
+    const scoreFor=qq=>{
+      let score=tipLev(n,qq);
+      if(qq.length>=5 && (n.includes(qq) || qq.includes(n)))
+        score=Math.min(score, Math.abs(n.length-qq.length)*0.25);
+      const nt=new Set(n.split(" ").filter(t=>t.length>=3));
+      const qt=qq.split(" ").filter(t=>t.length>=3);
+      let hit=qt.filter(t=>nt.has(t)).length;
+      // Soft hits: "duit"⊂"conduit", "nar"≈"lunar"
+      if(hit<2){
+        const used=new Set([...nt].filter(t=>qt.includes(t)));
+        for(const t of qt){
+          if([...nt].some(x=>x===t)) continue;
+          for(const ntok of nt){
+            if(used.has(ntok)) continue;
+            if(Math.min(t.length,ntok.length)<3) continue;
+            if(ntok.includes(t) || t.includes(ntok) || tipLev(t,ntok)<=Math.ceil(ntok.length*0.34)){
+              hit++; used.add(ntok); break;
+            }
+          }
+        }
+      }
+      if(hit>=2) score=Math.min(score, (nt.size-hit)+Math.max(0,qt.length-hit)*0.5);
+      return score;
+    };
+    const score=Math.min(scoreFor(q), scoreFor(qRepaired));
     if(score<bestScore){ bestScore=score; best=g; }
   }
   if(!best) return null;
-  const lim=Math.max(2, Math.ceil(tipNorm(best.name).length*0.28));
+  const lim=Math.max(2, Math.ceil(tipNorm(best.name).length*0.22));
   return bestScore<=lim ? best : null;
+}
+/* When the title is garbage but primaries survived, match a library item whose
+   fixed primary values line up (Midnight Kimono 48/12/12 vs OCR 48 Vit + 12 Prec). */
+function libMatchByPrimaries(rolls, lvl){
+  const ocrP=(rolls||[]).filter(r=>r.p && AKEYS.includes(r.s));
+  if(ocrP.length<2) return null;
+  let best=null, bestHits=0, bestShape=0, ambiguous=false;
+  for(const g of GEAR_LIB){
+    const ps=(g.rolls||[]).filter(r=>r.p);
+    if(ps.length<2) continue;
+    if(lvl!=null && g.lvl!=null && Math.abs(+g.lvl-+lvl)>8) continue;
+    let hits=0;
+    for(const p of ps){
+      if(ocrP.some(r=>r.s===p.s && Math.abs((+r.v)-(+p.v))<=1)) hits++;
+    }
+    if(hits<2) continue;
+    // Tie-break exact values by primary stat identity. Example at level 64:
+    // OCR 48 Vit / 12 Will / 12 Focus gives two exact hits for both Midnight
+    // Kimono and Dark Obsidian Legs, but only the Legs share all three stats
+    // (the pixel-font 0 in its 40 Vitality was read as 8).
+    const shape=ps.filter(p=>ocrP.some(r=>r.s===p.s)).length;
+    if(hits>bestHits || (hits===bestHits && shape>bestShape)){
+      bestHits=hits; bestShape=shape; best=g; ambiguous=false;
+    }else if(hits===bestHits && shape===bestShape){
+      ambiguous=true;
+    }
+  }
+  return (!ambiguous && bestHits>=2) ? best : null;
 }
 function pickRingSlot(){
   if(!S.gear["Ring 1"]) return "Ring 1";
@@ -1667,48 +1954,134 @@ function parseRollLine(line){
     if(found) tag=found;
     s=s.slice(tm[0].length);
   }
+  // Leading OCR junk before the roll: "1] +224 Healing", "men +27 Duration", `"132 Focus`.
+  // Prefer the rightmost "+<digit> …stat" when junk precedes it (the "1]" prefix).
+  const tailPlus=s.match(/^(.*?)([+\-]\d[\dIl|O0-9SsBbZz.@]*(?:\s*[%:])?\s+[A-Za-z].*)$/i);
+  if(tailPlus && tailPlus[1].length>0) s=tailPlus[2];
+  else s=s.replace(/^[^+\-\d]*?(?=[+\-]?\d)/,"");
+  // "+2 S68 Cooldown" — decimal / % fragment split into a second token.
+  // Only join when the middle token is digits-after-OCR (S68→568). Never glue
+  // real words: "+25 Oot Potency" must not become "+2500t Potency".
+  s=s.replace(/^([+\-]?)(\d+)\s+([A-Za-z0-9Il|OSsBbZz@]{2,4})\s+(?=[A-Za-z])/,(_,sign,a,b)=>{
+    // "5A" / "50" — trailing letter noise on a % hundredths fragment.
+    if(/^5[AOoa@0]$/.test(b)) return `${sign||""}${a}.50 `;
+    if(/^8[AOoa@0]$/.test(b)) return `${sign||""}${a}.80 `;
+    const frac=fixOcrNumberToken(b);
+    if(!/^\d+$/.test(frac) || frac.length<2) return `${sign||""}${a} ${b} `;
+    // Three-glyph OCR of ".50"/".80" (S68, 568, 508, 808…) → collapse to two digits.
+    let out=frac;
+    if(frac.length===3){
+      if(/^5[068][08]$/.test(frac)) out="50";
+      else if(/^8[068][08]$/.test(frac)) out="80";
+    }
+    return `${sign||""}${a}.${out} `;
+  });
+  // "F260 58% Dot Potency" — letter glued on the number, then split digit groups.
+  s=s.replace(/^[A-Za-z](?=\d)/,"");
+  s=s.replace(/^([+\-]?)(\d+(?:\s+\d+)+)\s*(%)(?=\s)/,(_,sign,nums,pct)=>(sign||"")+nums.replace(/\s+/g,"")+pct);
+  // Pixel "%" often reads as ":" — "+280: Attack Speed".
+  s=s.replace(/([0-9])\s*[:;]\s+/g,"$1% ");
+
   // number may lead ("+29 Vitality") or trail ("Vitality 29")
-  let m=s.match(/^([+\-]?)([Il|O0-9SsBbZz.,]+)\s*(%?)\s*(.+)$/);
+  let m=s.match(/^([+\-]?)([Il|O0-9SsBbZz.@]+)\s*([%:]?)\s*(.+)$/);
   if(m){
     const num=fixOcrNumberToken(m[2]);
-    if(/^\d+(?:\.\d+)?$/.test(num)) m=[null, (m[1]||"")+num, m[3], m[4]];
+    if(/^\d+(?:\.\d+)?$/.test(num)) m=[null, (m[1]||"")+num, m[3]===":"?"%":m[3], m[4]];
     else m=null;
   }
-  if(!m) m=(()=>{ const t=s.match(/^(.+?)\s+([+\-]?)([Il|O0-9SsBbZz.,]+)\s*(%?)$/);
+  if(!m) m=(()=>{ const t=s.match(/^(.+?)\s+([+\-]?)([Il|O0-9SsBbZz.@]+)\s*([%:]?)$/);
                   if(!t) return null;
                   const num=fixOcrNumberToken(t[3]);
                   if(!/^\d+(?:\.\d+)?$/.test(num)) return null;
-                  return [null, (t[2]||"")+num, t[4], t[1]]; })();
+                  return [null, (t[2]||"")+num, t[4]===":"?"%":t[4], t[1]]; })();
   if(!m) return null;
-  const value=parseFloat(m[1]); if(isNaN(value)) return null;
+  let value=parseFloat(m[1]); if(isNaN(value)) return null;
   const hadPct=m[2]==="%";
   let name=m[3].toLowerCase().replace(/[^a-z% ]/g,"").replace(/\s+/g," ").trim()
-              .replace(/\s*%$/,"");
+              .replace(/\s*%$/,"").replace(/^\++|\++$/g,"").trim();
   let stat=STAT_ALIASES[name];
   if(!stat){
-    // Fuzzy-ish: strip trailing junk OCR attaches ("Power." / "Vitalityy")
+    // Fuzzy-ish: strip trailing junk OCR attaches ("Power." / "Vitalityy" / "Qritical")
     const keys=Object.keys(STAT_ALIASES).sort((a,b)=>b.length-a.length);
-    const hit=keys.find(k=>name===k || name.startsWith(k+" ") || (k.length>=4 && tipLev(name,k)<=1));
+    const hit=keys.find(k=>{
+      if(name===k || name.startsWith(k+" ")) return true;
+      if(k.length<4) return false;
+      const lim=k.length>=12?2:1;
+      return tipLev(name,k)<=lim;
+    });
     if(hit) stat=STAT_ALIASES[hit];
   }
   if(!stat) return null;
   // Prefer the % twin when the pasted line had a % and the flat key has no % label
-  // (e.g. "-100% Link Count" → link_count_pct, same pattern as Dot Potency).
-  if(hadPct && SEC[stat] && !/%/.test(SEC[stat]) && SEC[stat+"_pct"]) stat=stat+"_pct";
+  // (e.g. "-100% Link Count" → link_count_pct). Skip keys we already treat as
+  // tooltip-% (Dot Potency / AoE) — those stay on the flat key the planner uses.
+  if(hadPct && SEC[stat] && !/%/.test(SEC[stat]) && SEC[stat+"_pct"] && !isPctStat(stat))
+    stat=stat+"_pct";
   const isAttr=AKEYS.includes(stat);
+  // Attribute OCR often glues a trailing junk digit (+13 → +132).
+  if(isAttr && !hadPct && Number.isInteger(value) && value>=100 && String(Math.abs(value)).length===3)
+    value=parseFloat(String(Math.abs(value)).slice(0,-1))*Math.sign(value||1);
   const roll={s:stat,p:isAttr?1:0,v:value,hadPct:!!hadPct};
+  // "+2 Focus +" when the real roll is +12 — leading digit dropped. Flag tiny
+  // primaries so we don't silently import a wrong 2.
+  if(isAttr && !hadPct && Number.isInteger(value) && value>0 && value<8){
+    roll.flagged=true; roll.ocrV=value;
+    roll.note="primary looks truncated — check the real value";
+  }
   if(!isAttr && tag) roll.t=tag;
+  return roll;
+}
+
+/* When the number is garbage (+E Vitality, + Lil] Will) but the stat name is
+   still recognizable, recover a roll so slot inference / secondaries aren't lost. */
+function recoverMangledRoll(line){
+  const raw=String(line||"").trim(); if(!raw || raw.length<3) return null;
+  if(parseRollLine(raw)) return null; // caller should try parse first
+  const low=tipNorm(raw);
+  const keys=Object.keys(STAT_ALIASES).filter(k=>k.length>=3).sort((a,b)=>b.length-a.length);
+  let stat=null, keyHit=null;
+  const tryKey=k=>{
+    if(stat) return;
+    if(low===k || low.endsWith(" "+k) || low.includes(k)){ stat=STAT_ALIASES[k]; keyHit=k; return; }
+    if(k.length>=4 && tipLev(low,k)<=Math.min(2, Math.ceil(k.length*0.3))){ stat=STAT_ALIASES[k]; keyHit=k; }
+  };
+  for(const k of keys) tryKey(k);
+  // "+E Yitality" — leading junk token; match individual words against aliases.
+  if(!stat){
+    for(const tok of low.split(" ").filter(t=>t.length>=4)){
+      for(const k of keys){
+        if(tok===k || tipLev(tok,k)<=Math.min(1, Math.ceil(k.length*0.25))){
+          stat=STAT_ALIASES[k]; keyHit=k; break;
+        }
+      }
+      if(stat) break;
+    }
+  }
+  if(!stat) return null;
+  // Prefer a real number token if any; otherwise flag for manual fill.
+  // Only accept a leading roll number — never a letter inside the stat name
+  // ("Yitality" must not yield "1" from the "l").
+  let value=NaN, hadPct=/%/.test(raw);
+  const nm=raw.match(/^[+\-]?\s*([0-9Il|OSsBbZz.@]{1,6})(?=\s|[%:]|$)/);
+  if(nm){
+    const num=fixOcrNumberToken(nm[1]);
+    if(/^\d+(?:\.\d+)?$/.test(num)) value=parseFloat(num);
+  }
+  const isAttr=AKEYS.includes(stat);
+  const roll={s:stat, p:isAttr?1:0, v:isNaN(value)?0:value, hadPct:!!hadPct};
+  if(isNaN(value)){ roll.flagged=true; roll.ocrV=raw; roll.note="couldn't read a number — fill after equipping"; }
   return roll;
 }
 
 function parseTooltipText(text){
   const raw=String(text||"").replace(/\r/g,"");
   let lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
-  // Tooltips wrap "+1 additional / projectile" across two lines.
+  // Tooltips wrap "+1 additional / projectile" (and "+1 additional Pyrosphere /
+  // projectile") across two lines.
   const stitched=[];
   for(let i=0;i<lines.length;i++){
     const a=lines[i], b=lines[i+1];
-    if(b && /additional$/i.test(a) && /^projectiles?$/i.test(b)){
+    if(b && /additional(?:\s+\w+)?$/i.test(a) && /^projectiles?$/i.test(b)){
       stitched.push(a+" "+b); i++; continue;
     }
     if(b && /abilities have/i.test(a) && /projectile/i.test(b) && !/projectile/i.test(a)){
@@ -1722,21 +2095,39 @@ function parseTooltipText(text){
   const rolls=[], fxLines=[];
   for(let i=0;i<lines.length;i++){
     const line=lines[i], low=line.toLowerCase();
-    if(/^primary\b/i.test(line) || /^[^a-z]*primary[^a-z]*$/i.test(line)){ section="primary"; continue; }
-    if(/secondary/i.test(line) && line.length<=18){ section="secondary"; continue; }
+    if(/^primary\b/i.test(line) || /^[^a-z]*primary[^a-z]*$/i.test(line)
+       || (/frimary|prirnary|pr[iı]mary|prnary/i.test(line) && line.length<=18)){ section="primary"; continue; }
+    if((/secondary|sacondary|secon+dary/i.test(line) && line.length<=20)){ section="secondary"; continue; }
     if(/^requires/i.test(line) || /requires\s*:/i.test(line)){ section="req"; continue; }
     if(/press\s*shift|to\s*compare/i.test(line)){ section="foot"; continue; }
     if(section==="req" || section==="foot") continue;
 
-    const lm=line.match(/^level\s*[:.]?\s*(\d{1,3})\b/i)
-          || line.match(/\blevel\s*[:.]?\s*(\d{1,3})\b/i);
-    if(lm && +lm[1]>0 && +lm[1]<200){ lvl=+lm[1]; continue; }
+    // Pixel digits in the level line: "Level b4" / "Level B4" → Level 64.
+    // Normalize only the number token so letters in item names remain untouched.
+    const lm=line.match(/^level\s*[:.]?\s*([0-9BbOoSsIl|]{1,3})\b/i)
+          || line.match(/\blevel\s*[:.]?\s*([0-9BbOoSsIl|]{1,3})\b/i);
+    if(lm){
+      const levelNum=+fixOcrNumberToken(lm[1].replace(/[bB]/g,"6"));
+      if(levelNum>0 && levelNum<200){ lvl=levelNum; continue; }
+    }
 
     // "abilities have +1 additional projectile" — unique fixed line, not a dropdown secondary.
+    // "abilities have +1 additional projectile" / "+1 additional Pyrosphere projectile"
     const proj=line.match(/abilities have\s*\+?(\d+)\s+additional\s+projectiles?/i)
-             || line.match(/\+?(\d+)\s+additional\s+projectiles?/i);
+             || line.match(/\+?(\d+)\s+additional\s+projectiles?/i)
+             || line.match(/\+?(\d+)\s+additional\s+([A-Za-z]+)\s+projectiles?/i);
     if(proj && (section==="secondary" || section==="primary" || !section)){
-      rolls.push({s:"projectile_count",p:0,v:+proj[1]});
+      const roll={s:"projectile_count",p:0,v:+proj[1]};
+      const scope=(proj[2]||"").toLowerCase();
+      if(scope){
+        const tag=TAG_KEYS.find(k=>{
+          if(k===scope) return true;
+          const label=(TAG_NAME[k]||k).toLowerCase().replace(/\s+/g,"");
+          return tipLev(label, scope)<=1 || tipLev(k, scope)<=1;
+        });
+        if(tag) roll.t=tag;
+      }
+      rolls.push(roll);
       continue;
     }
 
@@ -1770,7 +2161,7 @@ function parseTooltipText(text){
     }
 
     if(section==="primary" || section==="secondary"){
-      const r=parseRollLine(line);
+      const r=parseRollLine(line) || recoverMangledRoll(line);
       if(r){
         // Trust section headers over attr/secondary classification — but never
         // mark a non-attribute as primary just because it sat under Primary.
@@ -1805,13 +2196,16 @@ function parseTooltipText(text){
     rolls.forEach(r=>{ r.p=AKEYS.includes(r.s)?1:0; });
   }
 
-  if(name) name=name.replace(/[^A-Za-z0-9' -]+$/g,"").trim();
+  if(name) name=name.replace(/[^A-Za-z0-9' -]+$/g,"").trim()
+    // Common pixel-font miss on Voidline (V → YW / W).
+    .replace(/\bY?Woidline\b/i,"Voidline");
 
   const lib=fuzzyLibMatch(name) || (()=>{
     // Fall back: score every line as a possible name against the library.
     let best=null, bestScore=Infinity, bestName=null;
     for(const line of lines){
       if(skip.test(line) || RARITY_RE.test(line) || /^level\b/i.test(line)) continue;
+      if(!looksLikeItemNameLine(line)) continue;
       if(parseRollLine(line)) continue;
       const g=fuzzyLibMatch(line);
       if(!g) continue;
@@ -1820,14 +2214,46 @@ function parseTooltipText(text){
     }
     if(best && !name) name=bestName;
     return best;
-  })();
+  })() || (()=>{
+    // Distinctive tagged projectile lines often identify the ring when the title
+    // was lost to background UI ("ABILITIES" bleeding into the crop).
+    const tagged=rolls.find(r=>r.s==="projectile_count" && r.t);
+    if(!tagged) return null;
+    const g=GEAR_LIB.find(x=>(x.rolls||[]).some(r=>r.s==="projectile_count" && r.t===tagged.t));
+    return g||null;
+  })() || libMatchByPrimaries(rolls, lvl);
 
-  if(lib){
-    name=lib.name;
-    if(!slot) slot=lib.slot;
+  // Refuse accessory/library matches when OCR clearly shows armour primaries
+  // (Vitality + offensive) — stops junk lines falsely matching Gunner's Pendant.
+  const ocrPrimaries=rolls.filter(r=>r.p && AKEYS.includes(r.s));
+  const libPrimaries=lib?(lib.rolls||[]).filter(r=>r.p):[];
+  let libOut=lib;
+  if(libOut && ocrPrimaries.length>=2 && libPrimaries.length===0) libOut=null;
+  if(libOut && ocrPrimaries.some(r=>r.s==="vitality") && !libPrimaries.some(r=>r.s==="vitality"))
+    libOut=null;
+
+  if(libOut){
+    name=libOut.name;
+    if(!slot) slot=libOut.slot;
   }
   // Name alone often encodes the slot when OCR ate "Epic Neck" / "Legendary Feet".
   if(!slot && name) slot=normalizeSlotTip(name);
+  // Rarity line lost "Epic" but kept "Torso"/"Feet", or title ends with Chest.
+  if(!slot){
+    for(const line of lines){
+      if(skip.test(line) || /^level\b/i.test(line) || parseRollLine(line)) continue;
+      const s=normalizeSlotTip(line);
+      if(s){ slot=s; break; }
+    }
+  }
+  // Armour: any primary attrs (even with mangled values) → default Chest when the
+  // rarity line didn't name Head/Feet. User can override in the preview.
+  if(!slot){
+    const attrs=rolls.filter(r=>r.p && AKEYS.includes(r.s));
+    if(attrs.some(r=>r.s==="vitality") || attrs.length>=2) slot="Chest";
+    else if(attrs.length===1 && ["will","focus","power","ferocity","precision"].includes(attrs[0].s))
+      slot="Chest";
+  }
 
   return {
     name:name||"",
@@ -1836,24 +2262,37 @@ function parseTooltipText(text){
     lvl,
     rolls,
     fx:fxLines.join(" "),
-    lib,
+    lib:libOut,
     raw,
   };
 }
 
 function annotateOcrRoll(r){
+  if(r.flagged && (r.note||r.ocrV!=null)){
+    const o={s:r.s, p:r.p?1:0, v:0, src:"ocr", flagged:true, ocrV:r.ocrV||r.v, note:r.note||"couldn't read a number"};
+    if(r.t) o.t=r.t;
+    return o;
+  }
   const san=sanitizeOcrValue(r.s, r.v, r.hadPct);
   const o={s:r.s, p:r.p?1:0, v:san.flagged?0:san.v, src:"ocr"};
   if(r.t) o.t=r.t;
   if(san.flagged){ o.flagged=true; o.ocrV=r.v; o.note=san.note; }
   else if(san.fixed){ o.fixed=true; o.ocrV=san.was; o.note=san.note; }
+  if(!o.flagged){
+    const alternatives=plausibleOcrAlternatives(r.s,o.v);
+    if(alternatives.length){
+      o.alternatives=alternatives;
+      o.uncertain=true;
+    }
+  }
   return o;
 }
 function buildImportGear(parsed){
   const slot=resolveImportSlot(parsed.slot, parsed.lib);
   if(!slot) return null;
   if(parsed.lib){
-    const m=materializeLibItem(parsed.lib);
+    // Pass OCR rarity so epic rings don't get the legendary rolledSec count.
+    const m=materializeLibItem(parsed.lib, parsed.rarity);
     // Tag library-fixed rolls so the preview can tell them apart from OCR.
     m.rolls=m.rolls.map(r=>{
       if(!r.s) return {s:"",p:0,v:0,src:"ocr"}; // empty pick slot, filled below
@@ -1862,6 +2301,7 @@ function buildImportGear(parsed){
     const fixed=(parsed.lib.rolls||[]).map(r=>r.s);
     const fixedSet=new Set(fixed);
     // Random secondaries only — ignore OCR primaries when the library knows them.
+    // Also skip the fixed unique line if OCR re-read it (e.g. +1 Pyrosphere projectile).
     const secs=parsed.rolls.filter(r=>!r.p && r.s && !fixedSet.has(r.s)).map(annotateOcrRoll);
     let pi=0;
     for(let i=0;i<m.rolls.length;i++){
@@ -1870,6 +2310,9 @@ function buildImportGear(parsed){
       }
     }
     while(pi<secs.length) m.rolls.push(secs[pi++]);
+    // Tooltip is authoritative — drop leftover empty picks from the legendary
+    // template when this drop rolled fewer (epic Pyrosphere = 2 random, not 3).
+    m.rolls=m.rolls.filter(r=>r.s);
     return {slot, gear:m, fromLib:true};
   }
   const rolls=parsed.rolls.map(annotateOcrRoll);
@@ -1882,16 +2325,68 @@ function rollLabel(r){
   const tag=r.t?`[${TAG_NAME[r.t]||r.t}] `:"";
   return `${tag}${r.v>=0?"+":""}${r.v} ${nm}`;
 }
-function shotRollLi(r){
+function shotRollLi(r,index){
+  const nm=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s||"roll");
+  const tag=r.t?`[${TAG_NAME[r.t]||r.t}] `:"";
   if(r.flagged){
-    const nm=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s||"roll");
-    return `<li class="bad"><span class="k">check</span>+${esc(String(r.ocrV))} ${esc(nm)}
-      <span class="note">${esc(r.note||"implausible OCR value — not imported")}. Enter the real number after equipping.</span></li>`;
+    return `<li class="bad" data-roll-index="${index}"><span class="k">check</span>+
+      <input class="shot-value" type="number" step="any" data-roll-index="${index}"
+        placeholder="${esc(String(r.ocrV||"?"))}" aria-label="Correct ${esc(nm)} value">
+      ${esc(tag+nm)}
+      <span class="note">${esc(r.note||"couldn't read this value")}. Enter the real number before equipping.</span></li>`;
   }
   const cls=r.src==="lib"?"db":(r.s?"ocr":"fix");
   const badge=r.src==="lib"?"db":(r.s?"ocr":"pick");
-  const note=r.fixed?`<span class="note">${esc(r.note||"corrected from OCR")}</span>`:"";
-  return `<li class="${cls}"><span class="k">${badge}</span>${esc(rollLabel(r))}${note}</li>`;
+  if(r.src==="lib")
+    return `<li class="${cls}" data-roll-index="${index}"><span class="k">${badge}</span>${esc(rollLabel(r))}</li>`;
+  const possibilities=r.alternatives&&r.alternatives.length
+    ? [r.v,...r.alternatives].map(String).join(" or ")
+    : "";
+  const note=possibilities
+    ? `<span class="note">OCR uncertain — possible ${esc(possibilities)}. Confirm or edit this value.</span>`
+    : (r.fixed?`<span class="note">${esc(r.note||"corrected from OCR")}</span>`:"");
+  return `<li class="${cls}${r.uncertain?" uncertain":""}" data-roll-index="${index}">
+    <span class="k">${r.uncertain?"check":badge}</span>+
+    <input class="shot-value" type="number" step="any" value="${esc(String(r.v))}"
+      data-roll-index="${index}" aria-label="Edit ${esc(nm)} value">
+    ${esc(tag+nm)}${note}</li>`;
+}
+
+function refreshShotWarnings(){
+  if(!_shotPending) return;
+  const rolls=_shotPending.built.gear.rolls||[];
+  const flagged=rolls.filter(r=>r.flagged).length;
+  const uncertain=rolls.filter(r=>r.uncertain).length;
+  const el=document.getElementById("shotWarn");
+  if(!el) return;
+  const parts=[];
+  if(flagged) parts.push(`${flagged} unread value${flagged>1?"s":""} must be filled`);
+  if(uncertain) parts.push(`${uncertain} ambiguous value${uncertain>1?"s":""} should be confirmed`);
+  el.hidden=!parts.length;
+  el.textContent=parts.length?parts.join("; ")+". Edit the fields above before equipping.":"";
+}
+
+function wireShotValueInputs(){
+  document.querySelectorAll(".shot-value").forEach(input=>{
+    input.oninput=()=>{
+      if(!_shotPending) return;
+      const index=+input.dataset.rollIndex;
+      const r=(_shotPending.built.gear.rolls||[])[index];
+      if(!r) return;
+      const n=parseFloat(input.value);
+      const li=input.closest("li");
+      if(isFinite(n)){
+        r.v=n; r.flagged=false; r.userEdited=true;
+        delete r.uncertain; delete r.alternatives; delete r.fixed;
+        delete r.note; delete r.ocrV;
+        if(li){ li.classList.remove("bad","uncertain"); li.classList.add("ocr"); }
+      }else{
+        r.v=0; r.flagged=true;
+        if(li){ li.classList.add("bad"); li.classList.remove("uncertain"); }
+      }
+      refreshShotWarnings();
+    };
+  });
 }
 
 let _shotPending=null;
@@ -1911,12 +2406,19 @@ function shotClearPreview(){
   if(box){ box.hidden=true; box.innerHTML=""; }
 }
 function renderShotPreview(parsed, thumbUrl){
-  const built=buildImportGear(parsed);
+  let built=buildImportGear(parsed);
   const box=document.getElementById("shotPreview");
   if(!box) return;
+  // Rolls present but no slot (mangled "Epic Torso" line) — still show a preview
+  // with a slot picker instead of dead-ending.
+  if(!built && (parsed.rolls||[]).length){
+    const guess=parsed.slot||"Chest";
+    built=buildImportGear({...parsed, slot:guess});
+    if(built) built.needsSlotPick=true;
+  }
   if(!built){
     box.hidden=false;
-    box.innerHTML=`<div class="shot-meta">Couldn't tell which slot this belongs to. Check the raw OCR below, or paste the lines into a slot.</div>
+    box.innerHTML=`<div class="shot-meta">Couldn't read enough from that tooltip. Try a tighter crop of just the tooltip, or paste the lines into a slot.</div>
       <details class="raw" open><summary>Raw OCR</summary><pre>${esc(parsed.raw||"")}</pre></details>
       <div class="shot-actions"><button type="button" class="addbtn" id="shotCancel">Dismiss</button></div>`;
     document.getElementById("shotCancel").onclick=()=>{ shotClearPreview(); shotSetStatus(""); };
@@ -1926,26 +2428,42 @@ function renderShotPreview(parsed, thumbUrl){
   const g=built.gear;
   const rolls=g.rolls||[];
   const flagged=rolls.filter(r=>r.flagged).length;
+  const uncertain=rolls.filter(r=>r.uncertain).length;
   const src=built.fromLib
     ? `Matched library item — amber rows are from the database, cyan rows from the screenshot.`
     : `Not in the item database — every number is from OCR (double-check them).`;
+  const slotOpts=SLOTS.map(sl=>`<option value="${esc(sl)}"${sl===built.slot?" selected":""}>${esc(sl)}</option>`).join("");
   box.hidden=false;
   box.innerHTML=`<div class="shot-prev">
       ${thumbUrl?`<img src="${thumbUrl}" alt="Tooltip screenshot preview">`:""}
       <div class="shot-meta">
-        <div><b>${esc(g.item||parsed.name||"Item")}</b><span class="slotpill">${esc(built.slot)}</span></div>
-        <div style="margin-top:4px;color:var(--faint);font-size:12px">${esc(src)}</div>
+        <div><b>${esc(g.item||parsed.name||"Item")}</b>
+          <label class="slotpill" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+            <select id="shotSlot" style="background:transparent;border:0;color:inherit;font:inherit;cursor:pointer">${slotOpts}</select>
+          </label>
+        </div>
+        <div style="margin-top:4px;color:var(--faint);font-size:12px">${esc(src)}${built.needsSlotPick?" Pick the slot if Chest is wrong.":""}</div>
         <ul class="shot-rolls">${rolls.map(shotRollLi).join("")}</ul>
-        ${flagged?`<div class="shot-warn">${flagged} OCR value${flagged>1?"s":""} look wrong and will not be imported — fix them on the item after equipping.</div>`:""}
+        <div class="shot-warn" id="shotWarn"${flagged||uncertain?"":" hidden"}></div>
         <div class="shot-actions">
-          <button type="button" class="btn primary" id="shotEquip">Equip to ${esc(built.slot)}</button>
+          <button type="button" class="btn primary" id="shotEquip">Equip</button>
           <button type="button" class="addbtn" id="shotCancel">Cancel</button>
         </div>
       </div>
     </div>
     <details class="raw"><summary>Raw OCR text</summary><pre>${esc(parsed.raw||"")}</pre></details>`;
+  const slotEl=document.getElementById("shotSlot");
+  if(slotEl) slotEl.onchange=()=>{
+    if(!_shotPending) return;
+    _shotPending.built.slot=slotEl.value;
+    const btn=document.getElementById("shotEquip");
+    if(btn) btn.textContent=`Equip to ${slotEl.value}`;
+  };
   document.getElementById("shotEquip").onclick=()=>applyShotImport();
+  document.getElementById("shotEquip").textContent=`Equip to ${built.slot}`;
   document.getElementById("shotCancel").onclick=()=>{ shotClearPreview(); shotSetStatus(""); };
+  wireShotValueInputs();
+  refreshShotWarnings();
 }
 function applyShotImport(){
   if(!_shotPending) return;
@@ -1994,11 +2512,12 @@ function loadImageFromBlob(blob){
     img.src=url;
   });
 }
-function prepTooltipImage(img, invert){
-  // Nearest-neighbour upscale + hard threshold. Default invert → dark glyphs on
-  // light (Tesseract's preferred polarity); callers can also try the un-inverted
-  // pass when the first read is garbage.
-  const scale=Math.max(4, Math.min(8, Math.ceil(1200/Math.max(img.width,1))));
+
+/* DoE-style preprocess: nearest-neighbour upscale (pixel font), auto polarity,
+   Otsu bilevel so Tesseract sees crisp dark-on-light glyphs. forceInvert flips
+   the polarity guess when the first read scores poorly. */
+function prepTooltipImage(img, forceInvert){
+  const scale=Math.min(8, Math.max(3, Math.ceil(1800/Math.max(img.width,1))));
   const c=document.createElement("canvas");
   c.width=Math.max(1, Math.round(img.width*scale));
   c.height=Math.max(1, Math.round(img.height*scale));
@@ -2007,50 +2526,219 @@ function prepTooltipImage(img, invert){
   ctx.drawImage(img,0,0,c.width,c.height);
   const id=ctx.getImageData(0,0,c.width,c.height);
   const d=id.data;
+  const n=d.length/4;
+  const gray=new Uint8Array(n);
+  let sum=0, k=0;
   for(let i=0;i<d.length;i+=4){
-    const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    const on=y>48;
-    const v=invert?(on?0:255):(on?255:0);
-    d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
+    const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    gray[k++]=g; sum+=g;
+  }
+  let darkBg=(sum/n)<128;
+  if(forceInvert) darkBg=!darkBg;
+  const hist=new Uint32Array(256);
+  for(let i=0;i<n;i++){
+    const gv=darkBg?255-gray[i]:gray[i];
+    gray[i]=gv;
+    hist[gv|0]++;
+  }
+  // Otsu threshold → pure black/white. Slight +bias keeps faint pixel strokes.
+  let s2=0; for(let i=0;i<256;i++) s2+=i*hist[i];
+  let sumB=0, wB=0, varMax=0, thr=127;
+  for(let i=0;i<256;i++){
+    wB+=hist[i]; if(!wB) continue;
+    const wF=n-wB; if(!wF) break;
+    sumB+=i*hist[i];
+    const mB=sumB/wB, mF=(s2-sumB)/wF;
+    const bt=wB*wF*(mB-mF)*(mB-mF);
+    if(bt>varMax){ varMax=bt; thr=i; }
+  }
+  thr=Math.min(255, thr+8);
+  k=0;
+  for(let i=0;i<d.length;i+=4){
+    const bv=gray[k++]<=thr?0:255;
+    d[i]=d[i+1]=d[i+2]=bv; d[i+3]=255;
   }
   ctx.putImageData(id,0,0);
   return c;
 }
 
+/* Left strip of the tooltip — where "+40" / "+3.50%" sit — for a digit-focused
+   second OCR pass when labels survived but numbers didn't. */
+function cropDigitColumn(canvas){
+  const w=Math.max(1, Math.round(canvas.width*0.42));
+  const c=document.createElement("canvas");
+  c.width=w; c.height=canvas.height;
+  const ctx=c.getContext("2d");
+  ctx.drawImage(canvas, 0, 0, w, canvas.height, 0, 0, w, c.height);
+  return c;
+}
+
+const OCR_WHITELIST="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+%-.:'[] ";
+const OCR_DIGIT_WHITELIST="0123456789+.%: ";
+
 function ocrScore(parsed){
-  // Prefer library matches and more parsed rolls — used to pick between polarity passes.
-  let n=(parsed.rolls||[]).length;
+  // Prefer more parsed rolls, then library matches — used to pick between OCR passes.
+  let n=(parsed.rolls||[]).length*3;
   if(parsed.lib) n+=8;
   if(parsed.slot) n+=2;
-  if(parsed.name && parsed.name.length>6) n+=1;
+  if(parsed.name && parsed.name.length>6 && !/^he?mel\b/i.test(parsed.name)) n+=1;
+  if(parsed.name && parsed.name.length<=8 && !parsed.lib) n-=2;
+  n+=(parsed.rolls||[]).filter(r=>!r.flagged && r.v).length;
   return n;
+}
+
+function needsDigitPass(parsed){
+  const rolls=parsed.rolls||[];
+  if(!rolls.length) return false;
+  const primaries=rolls.filter(r=>r.p && AKEYS.includes(r.s));
+  // Armour tooltips always show Vitality + 2 attrs — missing one means numbers failed.
+  if(primaries.length>0 && primaries.length<3 && primaries.some(r=>r.s==="vitality"||r.flagged))
+    return true;
+  if(primaries.length>=1 && primaries.length<3 && rolls.some(r=>!r.p))
+    return true;
+  return rolls.some(r=>{
+    if(r.flagged || !r.v) return true;
+    if(AKEYS.includes(r.s) && Number.isInteger(+r.v) && +r.v>0 && +r.v<8) return true;
+    // Whole-number % secondary that looks like a dropped decimal (3.50 → 2).
+    if(isPctStat(r.s) && Number.isInteger(+r.v) && Math.abs(+r.v)<5) return true;
+    return false;
+  });
+}
+
+function extractDigitTokens(text){
+  const out=[];
+  for(const line of String(text||"").split(/\n/)){
+    const s=line.trim(); if(!s) continue;
+    // Require a leading "+"/"-" (tooltip rolls) or an explicit % — skip bare
+    // numbers from Level / HUD bleed ("54", "eve] 54").
+    const m=s.match(/^([+\-])\s*([Il|O0-9SsBbZz.@]+)\s*([%:]?)/)
+          || s.match(/^([Il|O0-9SsBbZz.@]+)\s*([%:])/);
+    if(!m) continue;
+    let sign="", numTok, pct="";
+    if(m[0][0]==="+"||m[0][0]==="-"){ sign=m[1]; numTok=m[2]; pct=m[3]||""; }
+    else{ numTok=m[1]; pct=m[2]||""; }
+    const num=fixOcrNumberToken(numTok);
+    if(!/^\d+(?:\.\d+)?$/.test(num)) continue;
+    const v=parseFloat(sign+num);
+    if(isNaN(v)) continue;
+    out.push({v, hadPct:pct==="%"||pct===":", raw:s});
+  }
+  return out;
+}
+
+/* Reattach digit-pass values onto rolls whose labels we already know but whose
+   numbers were flagged / truncated. Order-preserving within Primary then Secondary. */
+function refillRollsFromDigits(rolls, digitText){
+  const tokens=extractDigitTokens(digitText);
+  if(!tokens.length || !(rolls||[]).length) return;
+  let ti=0;
+  const weak=r=>r.flagged || !r.v || (AKEYS.includes(r.s) && Number.isInteger(+r.v) && +r.v>0 && +r.v<8);
+  for(const r of rolls){
+    if(ti>=tokens.length) break;
+    if(!weak(r)) continue;
+    const t=tokens[ti++];
+    r.v=t.v;
+    if(t.hadPct) r.hadPct=true;
+    delete r.flagged;
+    delete r.note;
+    delete r.ocrV;
+    // Re-apply truncated-primary guard only when still absurdly small.
+    if(AKEYS.includes(r.s) && Number.isInteger(r.v) && r.v>0 && r.v<8){
+      r.flagged=true; r.ocrV=r.v;
+      r.note="primary looks truncated — check the real value";
+    }
+  }
+}
+
+function shotShowThumb(url){
+  const box=document.getElementById("shotPreview");
+  if(!box||!url) return;
+  box.hidden=false;
+  box.innerHTML=`<div class="shot-prev">
+      <img src="${url}" alt="Tooltip screenshot preview">
+      <div class="shot-meta">Reading on your device…</div>
+    </div>`;
+}
+
+function ocrLogger(label){
+  return m=>{
+    if(m.status==="recognizing text" && m.progress!=null){
+      shotSetStatus(`${label} · ${Math.round(m.progress*100)}%`);
+    }else if(m.status==="loading language traineddata" && m.progress!=null){
+      shotSetStatus(`Loading OCR language… ${Math.round(m.progress*100)}%`);
+    }else if(m.status==="initializing tesseract"||m.status==="loading tesseract core"){
+      shotSetStatus("Starting OCR…");
+    }
+  };
+}
+
+/* One worker: try each PSM on the same canvas, keep the best parse, then
+   terminate (DoE lesson — reusing a worker across pastes can return empty). */
+async function ocrBestOnCanvas(T, canvas, psms, whitelist, label){
+  const worker=await T.createWorker("eng", 1, {logger:ocrLogger(label)});
+  const texts=[];
+  let bestParsed=null, bestText="", bestSc=-Infinity;
+  try{
+    for(const psm of psms){
+      await worker.setParameters({
+        tessedit_pageseg_mode:String(psm),
+        tessedit_char_whitelist:whitelist,
+      });
+      const result=await worker.recognize(canvas);
+      const text=(result&&result.data&&result.data.text)||"";
+      if(!text.trim()) continue;
+      texts.push(text);
+      const parsed=parseTooltipText(text);
+      const sc=ocrScore(parsed);
+      if(sc>bestSc){ bestSc=sc; bestParsed=parsed; bestText=text; }
+      if(bestSc>=14 && (bestParsed.rolls||[]).filter(r=>!r.flagged).length>=3) break;
+    }
+  }finally{
+    try{ await worker.terminate(); }catch(e){}
+  }
+  return {parsed:bestParsed||parseTooltipText(""), text:bestText, texts, score:bestSc};
 }
 
 async function ocrTooltipImage(img){
   const T=await loadTesseract();
-  const opts={
-    logger:m=>{
-      if(m.status==="recognizing text" && m.progress!=null){
-        shotSetStatus(`Reading tooltip… ${Math.round(m.progress*100)}%`);
-      }else if(m.status==="loading language traineddata" && m.progress!=null){
-        shotSetStatus(`Loading OCR language… ${Math.round(m.progress*100)}%`);
-      }else if(m.status==="initializing tesseract"||m.status==="loading tesseract core"){
-        shotSetStatus("Starting OCR…");
-      }
-    },
-  };
-  // Try dark-on-light first; if that barely parses, fall back to light-on-dark.
-  const pass=async(invert)=>{
-    const canvas=prepTooltipImage(img, invert);
-    const result=await T.recognize(canvas,"eng",opts);
-    return (result&&result.data&&result.data.text)||"";
-  };
-  const textA=await pass(true);
-  const parsedA=parseTooltipText(textA);
-  if(ocrScore(parsedA)>=3) return textA;
-  shotSetStatus("Retrying OCR polarity…");
-  const textB=await pass(false);
-  return ocrScore(parseTooltipText(textB))>ocrScore(parsedA)?textB:textA;
+  // Primary path: Otsu prep once → PSM 3 then 6 (DoE pattern).
+  shotSetStatus("Reading tooltip on your device…");
+  let canvas=prepTooltipImage(img);
+  let {parsed, texts, score}=await ocrBestOnCanvas(T, canvas, ["3","6"], OCR_WHITELIST, "Reading tooltip…");
+  const rawParts=texts.slice();
+
+  // Safety: polarity flip once if the first read is still weak.
+  if(score<8){
+    shotSetStatus("Reading tooltip… adjusting contrast…");
+    canvas=prepTooltipImage(img, true);
+    const retry=await ocrBestOnCanvas(T, canvas, ["6"], OCR_WHITELIST, "Reading tooltip…");
+    rawParts.push(...retry.texts);
+    if(retry.score>score){ parsed=retry.parsed; score=retry.score; }
+  }
+
+  // Digit column pass when labels landed but numbers look wrong / missing.
+  if(needsDigitPass(parsed)){
+    shotSetStatus("Reading tooltip… numbers…");
+    const dig=cropDigitColumn(canvas);
+    const worker=await T.createWorker("eng", 1, {logger:ocrLogger("Reading numbers…")});
+    let digText="";
+    try{
+      await worker.setParameters({
+        tessedit_pageseg_mode:"6",
+        tessedit_char_whitelist:OCR_DIGIT_WHITELIST,
+      });
+      const result=await worker.recognize(dig);
+      digText=(result&&result.data&&result.data.text)||"";
+    }finally{
+      try{ await worker.terminate(); }catch(e){}
+    }
+    if(digText.trim()){
+      rawParts.push("--- digits ---\n"+digText);
+      refillRollsFromDigits(parsed.rolls, digText);
+    }
+  }
+
+  return {raw:rawParts.join("\n---\n"), parsed};
 }
 
 async function handleShotBlob(blob){
@@ -2061,9 +2749,11 @@ async function handleShotBlob(blob){
   shotSetStatus("Loading OCR…");
   try{
     const {img,url}=await loadImageFromBlob(blob);
-    shotSetStatus("Reading tooltip…");
-    const text=await ocrTooltipImage(img);
-    const parsed=parseTooltipText(text);
+    // Show the paste immediately (DoE UX) while OCR runs on-device.
+    shotShowThumb(url);
+    shotSetStatus("Reading tooltip on your device…");
+    const {raw, parsed}=await ocrTooltipImage(img);
+    parsed.raw=raw||parsed.raw||"";
     if(!parsed.name && !parsed.rolls.length && !parsed.lib){
       shotSetStatus("Couldn't read that tooltip — try a tighter crop", true);
       renderShotPreview(parsed, url);
@@ -2472,12 +3162,22 @@ function libByName(name){
   return GEAR_LIB.find(x=>x.name===name)||null;
 }
 /* Fixed rolls from the library, plus empty slots for random secondaries
-   (rolledSec). Caller fills those in — sample CDR/Healing values aren't hardcoded. */
-function materializeLibItem(g){
+   (rolledSec). Caller fills those in — sample CDR/Healing values aren't hardcoded.
+   Lower rarities often roll one fewer random secondary than the legendary template. */
+function rolledSecCount(g, rarity){
+  let n=+g.rolledSec||0;
+  if(!n || !rarity) return n;
+  const r=String(rarity).toLowerCase();
+  if(r==="legendary") return n;
+  if(r==="epic" || r==="rare") return Math.max(0, n-1);
+  if(r==="uncommon" || r==="common") return Math.max(0, n-2);
+  return n;
+}
+function materializeLibItem(g, rarity){
   const rolls=JSON.parse(JSON.stringify(g.rolls||[]));
-  const n=+g.rolledSec||0;
+  const n=rolledSecCount(g, rarity);
   for(let i=0;i<n;i++) rolls.push({s:"",p:0,v:0});
-  return {item:g.name,rolls};
+  return {item:g.name, lv:g.lvl!=null?+g.lvl:0, rolls};
 }
 function loadFromLib(idx){
   if(idx==="") return;
