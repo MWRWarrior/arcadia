@@ -234,10 +234,62 @@
     font-family:var(--sans);font-size:12.5px;resize:vertical}
   .qa .addbtn{margin:6px 9px 9px}
 
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  /* --- screenshot → gear ---------------------------------------------- */
+  .shot{border:1px dashed var(--edge);background:var(--sunk);padding:10px 11px;margin-bottom:10px;
+    transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease)}
+  .shot.drag{border-color:var(--amber-dim);background:#1E1826}
+  .shot-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .shot-hint{flex:1;min-width:140px;font-size:12.5px;color:var(--faint);line-height:1.45}
+  .shot-status{font-size:12.5px;color:var(--cyan);margin-top:8px}
+  .shot-status.err{color:var(--red)}
+  .shot-prev{display:flex;gap:12px;margin-top:10px;align-items:flex-start;flex-wrap:wrap}
+  .shot-prev img{width:96px;height:auto;border:1px solid var(--edge2);background:var(--void);
+    image-rendering:pixelated;flex:0 0 auto}
+  .shot-meta{flex:1;min-width:180px;font-size:13px;line-height:1.5;color:var(--dim)}
+  .shot-meta b{color:var(--ink);font-weight:600}
+  .shot-meta .slotpill{display:inline-block;font-size:11px;padding:2px 7px;border:1px solid var(--amber-dim);
+    color:var(--amber-ink);margin-left:6px;vertical-align:middle}
+  .shot-rolls{margin:7px 0 0;padding:0;list-style:none}
+  .shot-rolls li{font-size:12.5px;color:var(--dim);padding:2px 0}
+  .shot-rolls li .k{color:var(--faint);font-size:11px;margin-right:6px}
+  .shot-rolls li.fix{color:var(--cyan)}
+  .shot-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .shot details.raw{margin-top:8px}
+  .shot details.raw summary{cursor:pointer;font-size:12px;color:var(--faint)}
+  .shot details.raw pre{margin:6px 0 0;padding:8px;background:var(--void);border:1px solid var(--edge2);
+    color:var(--dim);font-size:11px;white-space:pre-wrap;max-height:140px;overflow:auto}
+  .libwrap{margin-bottom:7px;position:relative}
+  .libfilter{width:100%;margin-bottom:5px;background:var(--void);border:1px solid var(--edge);
+    color:var(--ink);padding:7px 9px;font-family:var(--sans);font-size:12.5px}
+  .libhits{position:absolute;left:0;right:0;top:100%;z-index:20;max-height:220px;overflow:auto;
+    background:var(--panel2);border:1px solid var(--amber-dim);box-shadow:0 8px 22px rgba(0,0,0,.55)}
+  .libhits[hidden]{display:none}
+  .libhit{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--edge2);
+    background:transparent;color:var(--ink);padding:9px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+  .libhit:hover,.libhit:focus,.libhit.active{background:#1E1826;color:var(--amber-ink);outline:none}
+  .libhit .meta{color:var(--faint);font-size:11.5px}
+  .libhits .libempty{padding:10px 11px;color:var(--faint);font-size:12.5px}
+  .rollrow.locked{opacity:.9}
+  .rollrow .kind.fixed{color:var(--amber-ink)}
+  .rollrow button.dup{color:var(--cyan);border-color:var(--edge)}
+  .slot .body{display:flex;flex-direction:column}
+  @media (max-width:520px){
+    .qa{order:-1;margin-top:0;margin-bottom:10px;border-color:var(--amber-dim)}
+    .qa summary{font-size:14px;padding:12px;font-weight:600;color:var(--ink)}
+    .qabox{font-size:16px;min-height:120px;padding:10px}
+    .qa .addbtn{display:block;width:calc(100% - 18px);margin:8px 9px 12px;padding:12px 14px;
+      font-size:15px;font-weight:600;text-align:center}
+    .libfilter{font-size:16px;padding:10px 11px}
+    .libhits{max-height:260px}
+    .libhit{padding:12px 11px;font-size:14px}
+  }
+
+  .toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
     background:var(--panel2);border:1px solid var(--amber-dim);color:var(--ink);
-    padding:9px 15px;font-family:var(--pixel);font-size:10.5px;text-transform:uppercase;
-    z-index:var(--z-toast);box-shadow:0 6px 22px rgba(0,0,0,.6)}
+    padding:14px 18px;font-family:var(--pixel);font-size:11px;text-transform:uppercase;
+    z-index:var(--z-toast);box-shadow:0 10px 36px rgba(0,0,0,.65);max-width:min(420px,92vw);
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;text-align:center;
+    line-height:1.45}
   .disc{color:var(--faint);font-size:11.5px;margin-top:26px;line-height:1.7;
     border-top:1px solid var(--edge2);padding-top:14px}
   .disc a{color:var(--cyan)}
@@ -436,7 +488,18 @@
         <div class="lo" id="loadout"></div>
       </div>
       <div class="card">
-        <h2>Gear <span class="hint">copy the rolls from your item tooltips</span></h2>
+        <h2>Gear <span class="hint">screenshot a tooltip, or paste the lines</span></h2>
+        <div class="shot" id="shotZone" tabindex="0"
+             aria-label="Drop or paste an item tooltip screenshot">
+          <div class="shot-top">
+            <span class="shot-hint">Drop a tooltip screenshot here, paste with <b>Ctrl+V</b>, or pick a file. Matched library items fill fixed rolls; random secondaries come from the image — double-check the values and edit as needed.</span>
+            <button type="button" class="addbtn" id="shotPaste">Paste screenshot</button>
+            <button type="button" class="addbtn" id="shotFile">Upload image</button>
+            <input type="file" id="shotInput" accept="image/*" hidden>
+          </div>
+          <div class="shot-status" id="shotStatus" hidden></div>
+          <div id="shotPreview" hidden></div>
+        </div>
         <div id="gear"></div>
         <div class="note info" id="itemRules"></div>
       </div>
@@ -447,9 +510,12 @@
           <input class="itemname-edit" id="cmpName" placeholder="Candidate item name"
                  aria-label="Candidate item name" oninput="setCmpName(this.value)">
         </div>
-        <div class="cmpbar">
-          <select class="pick" id="cmpLib" aria-label="Load a documented item"
-                  onchange="loadFromLib(this.value)"></select>
+        <div class="cmpbar libwrap" style="display:block">
+          <input class="libfilter" id="cmpLibFilter" type="search" placeholder="Search documented items…"
+                 aria-label="Search documented items" autocomplete="off"
+                 oninput="libSearchCmp(this.value)" onfocus="libSearchCmp(this.value)"
+                 onkeydown="libSearchKey(event,'__cmp')" style="width:100%;margin:0">
+          <div class="libhits" id="libhits___cmp" hidden></div>
         </div>
         <div id="cmpRolls"></div>
         <button class="addbtn" onclick="addCmpRoll(1)">+ primary</button>
@@ -486,7 +552,7 @@
         <div id="procs"></div>
       </details>
       <details class="card ref">
-        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 102 items</span></h2></summary>
+        <summary><h2>Item database <span class="hint">what each base item rolls &middot; 103 items</span></h2></summary>
         <label class="sr-only" for="itemq">Filter items</label>
         <input id="itemq" type="search" placeholder="filter — try &quot;t5 head&quot;, &quot;lunar&quot;, &quot;staff&quot;"
                oninput="renderItemDb()" style="width:100%;margin-bottom:8px">
@@ -590,6 +656,7 @@ const GEAR_LIB = [
   {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
   {"slot":"Arms","name":"Viridium Yoku Hammer","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+100% threat generation briefly"},"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12}]},
+  {"slot":"Arms","name":"Viridium Yoku Staff","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on impact end","scope":"pyrosphere","effect":"Hit 5+ enemies with Pyrosphere to create a shockwave from the impact"},"rolls":[{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12},{"s":"ferocity","p":1,"v":12}]},
   /* Fixed: primaries + unique Link Count lines. rolledSec = random secondaries
      (CDR, Healing Power, Dot Potency, …) — not hardcoded; picker fills them in. */
   {"slot":"Arms","name":"Celestial Yoku Staff","rarity":"legendary","lvl":39,"rolledSec":2,"rolls":[{"s":"will","p":1,"v":13},{"s":"focus","p":1,"v":13},{"s":"ferocity","p":1,"v":13},{"s":"link_count_pct","p":0,"v":-100.0},{"s":"link_count","p":0,"v":8.0}]},
@@ -606,6 +673,7 @@ const GEAR_LIB = [
   {"slot":"Feet","name":"ChronoTehc Boots","rarity":"rare","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"will","p":1,"v":9},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":22.0},{"s":"healing_power","p":0,"v":22.0},{"s":"dot_potency","p":0,"v":22.0}]},
   /* Observed sample always showed these secondaries — treat as fixed until proven otherwise. */
   {"slot":"Feet","name":"Voltscale Legguards","rarity":"legendary","lvl":47,"rolls":[{"s":"vitality","p":1,"v":29},{"s":"power","p":1,"v":9},{"s":"ferocity","p":1,"v":9},{"s":"critical_strike_chance","p":0,"v":7.0},{"s":"critical_strike_chance","p":0,"v":5.0,"t":"gun"},{"s":"critical_strike_damage","p":0,"v":28.0}]},
+  {"slot":"Feet","name":"Foundation Bulwark Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on enemy hit","scope":"","effect":"1% chance to heal you for 1 HP"},"rolls":[{"s":"power","p":1,"v":15},{"s":"will","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Feet","name":"Virelda Warcrest Greaves","rarity":"legendary","lvl":83,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":15},{"s":"ferocity","p":1,"v":15},{"s":"vitality","p":1,"v":53}]},
   {"slot":"Feet","name":"Neotilus Trailseeker Boots","rarity":"legendary","lvl":83,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":15},{"s":"precision","p":1,"v":15},{"s":"vitality","p":1,"v":53},{"s":"projectile_count","p":0,"v":1}]},
   {"slot":"Feet","name":"Necrotic Warrior Boots","rarity":"legendary","lvl":91,"rolledSec":2,"rolls":[{"s":"power","p":1,"v":17},{"s":"ferocity","p":1,"v":16},{"s":"vitality","p":1,"v":58}]},
@@ -688,7 +756,7 @@ const PROCS=[
  {pat:"t4 heavy Neotilus", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability", name:"Tritanium Hammer"},
  {pat:"t4 staff Lunar", trigger:"on crit", effect:"Power buff to void abilities", scope:"void", chance:100, buffs:true, id:"legendary_void_crit_power_buff_ability"},
  {pat:"t5 greatsword Neotilus", trigger:"on enemy hit", effect:"Chill DEBUFF on the enemy", scope:"melee", chance:100, id:"legendary_melee_chill_debuff"},
- {pat:"t5 staff Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"pyrosphere", chance:100, id:"legendary_pyrosphere_5hit_shockwave"},
+ {pat:"t5 staff Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"pyrosphere", chance:100, id:"legendary_pyrosphere_5hit_shockwave", name:"Viridium Yoku Staff"},
 ];
 
 /* Legendaries confirmed to carry NO proc, so a blank can be trusted rather than
@@ -777,6 +845,7 @@ const EXAMPLE={
 
 /* ═══════════ STATE + SHARE LINKS ═══════════ */
 const LS="sb_planner_v3";
+const LS_OPEN="sb_planner_open_slot";
 let S = fromHash() || loadState();   // legacy links + stored build, synchronous
 // A compressed link can't be read synchronously, so decode it after first paint.
 (async()=>{
@@ -882,7 +951,15 @@ function fromHash(){
 // Try for a short link first (/b/x7k2p) so the URL doesn't look like spam to
 // chat auto-moderators. If the API is unreachable, fall back to the long
 // self-contained link — sharing must never break just because a server is down.
-async function shareLink(){
+async function shareLink(force){
+  // onclick handlers pass the Event as arg 1 — only an explicit true forces through.
+  if(force!==true){
+    const miss=emptySecSlots();
+    if(miss.length){
+      toast(`Unfilled secondary picks on ${miss.join(", ")}`, ()=>shareLink(true), "Share anyway");
+      return;
+    }
+  }
   const code=await encodeBuild();
   const longUrl=location.origin+location.pathname+"#b="+code;
   let url=longUrl, short=false;
@@ -906,6 +983,14 @@ async function shareLink(){
     toast("Link ready in the address bar — copy it");
   }
 }
+function emptySecSlots(){
+  const miss=[];
+  SLOTS.forEach(sl=>{
+    const g=S.gear[sl]; if(!g) return;
+    if((g.rolls||[]).some(r=>!r.p&&!r.s)) miss.push(sl);
+  });
+  return miss;
+}
 // Opening /b/x7k2p: fetch the stored build and load it.
 async function loadFromShortLink(){
   const m=location.pathname.match(/\/b\/([A-Za-z0-9]{4,12})\/?$/);
@@ -925,12 +1010,12 @@ async function loadFromShortLink(){
 /* An optional `undo` callback turns the toast into the escape hatch for a
    destructive action, which beats a confirm dialog for something you'll do
    often. Announced politely so a screen reader hears it at all. */
-function toast(msg,undo){
+function toast(msg,undo,undoLabel){
   const t=document.getElementById("toast");
   t.textContent=msg;
   if(undo){
     const b=document.createElement("button");
-    b.className="btn"; b.type="button"; b.textContent="Undo";
+    b.className="btn"; b.type="button"; b.textContent=undoLabel||"Undo";
     b.style.marginLeft="11px";
     b.onclick=()=>{ t.classList.remove("on"); undo(); };
     t.appendChild(b);
@@ -1023,9 +1108,6 @@ function renderCompare(){
     ? `<div class="note warn">A recent patch adjusted accessory secondary stats. Documented
        ring / neck / belt values here may be out of date &mdash; trust your own tooltip over this
        library for those slots.</div>` : "";
-  document.getElementById("cmpLib").innerHTML =
-    `<option value="">${lib.length?`load a documented ${C.slot} item (${lib.length})`:`no documented items for ${C.slot} yet`}</option>`
-    + lib.map((g,i)=>`<option value="${i}">${g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":""}${g.name}${g.lvl?` (iL${g.lvl})`:""}</option>`).join("");
   const nameEl=document.getElementById("cmpName");
   if(nameEl.value!==C.item) nameEl.value=C.item||"";
   const libItem=libByName(C.item);
@@ -1036,7 +1118,8 @@ function renderCompare(){
        Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
   document.getElementById("cmpRolls").innerHTML=(C.rolls||[]).map((r,i)=>{
     const head=needsPick&&i===fixedN?pickNote:"";
-    return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN);
+    const locked=!!(libItem&&i<fixedN);
+    return head+rollRow("__cmp",i,r,needsPick&&i>=fixedN,locked);
   }).join("")+(needsPick&&(C.rolls||[]).length<=fixedN?pickNote:"");
 
   const out=document.getElementById("cmpOut");
@@ -1406,8 +1489,8 @@ function renderRules(){
 }
 
 /* ---- quick entry: type or paste tooltip lines instead of using dropdowns ----
-   OCR on the game's pixel font was tested and misread ~half the digits while
-   still producing plausible output, so the user supplies the characters. */
+   Screenshot OCR is library-first: name → GEAR_LIB for fixed rolls (digits on the
+   pixel font are unreliable), then only the random secondaries come from OCR. */
 const STAT_ALIASES = (()=>{
   const m={};
   AKEYS.forEach(k=>{ m[k]=k; });
@@ -1438,13 +1521,92 @@ const STAT_ALIASES = (()=>{
     "stun resistance":"stun_resistance", "shots per tick":"shots_per_tick",
     "extra projectiles":"projectile_count", "additional projectile":"projectile_count",
     "link count":"link_count", "link count flat":"link_count",
+    knockback:"knockback",
   });
   return m;
 })();
 
+const RARITY_RE=/^(legendary|epic|rare|uncommon|common)\b/i;
+const SLOT_FROM_TIP={
+  arms:"Arms", weapon:"Arms", staff:"Arms", hammer:"Arms", sword:"Arms", katana:"Arms", greatsword:"Arms",
+  head:"Head", helm:"Head", crown:"Head", visor:"Head",
+  chest:"Chest", torso:"Chest", cuirass:"Chest", coat:"Chest", plate:"Chest",
+  feet:"Feet", boots:"Feet", greaves:"Feet", legguards:"Feet",
+  back:"Back", cloak:"Back", cape:"Back",
+  neck:"Neck", pendant:"Neck", amulet:"Neck",
+  ring:"Ring 1", belt:"Belt", girdle:"Belt", cinch:"Belt",
+};
+
+function tipNorm(s){
+  return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();
+}
+function tipLev(a,b){
+  a=tipNorm(a); b=tipNorm(b);
+  if(a===b) return 0;
+  const m=a.length, n=b.length;
+  if(!m) return n; if(!n) return m;
+  const row=new Array(n+1);
+  for(let j=0;j<=n;j++) row[j]=j;
+  for(let i=1;i<=m;i++){
+    let prev=row[0]; row[0]=i;
+    for(let j=1;j<=n;j++){
+      const cur=row[j];
+      row[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,row[j],row[j-1]);
+      prev=cur;
+    }
+  }
+  return row[n];
+}
+function fixOcrNumberToken(tok){
+  // Only rewrite lookalikes inside a numeric token — never touch stat names.
+  return tok.replace(/[Il|]/g,"1").replace(/[Oo]/g,"0").replace(/[Ss]/g,"5")
+             .replace(/[Bb]/g,"8").replace(/[Zz]/g,"2").replace(/,/g,"");
+}
+function normalizeSlotTip(raw){
+  const t=tipNorm(raw);
+  if(!t) return null;
+  if(SLOT_ALIAS[raw]) return SLOT_ALIAS[raw];
+  for(const [k,v] of Object.entries(SLOT_FROM_TIP)){
+    if(t===k || t.includes(k)) return v;
+  }
+  if(SLOTS.includes(raw)) return raw;
+  return null;
+}
+function fuzzyLibMatch(name){
+  const q=tipNorm(name); if(!q || q.length<3) return null;
+  let best=null, bestScore=Infinity;
+  for(const g of GEAR_LIB){
+    const n=tipNorm(g.name);
+    let score=tipLev(n,q);
+    // Prefer containment when OCR drops a word or adds junk around the name.
+    if(n.includes(q) || q.includes(n)) score=Math.min(score, Math.abs(n.length-q.length)*0.25);
+    // Token overlap: "foundation bulwark greaves" vs OCR "Foundation Bulwark Greaves"
+    const nt=new Set(n.split(" ")), qt=q.split(" ");
+    const hit=qt.filter(t=>nt.has(t)).length;
+    if(hit>=2) score=Math.min(score, (nt.size-hit)+Math.max(0,qt.length-hit)*0.5);
+    if(score<bestScore){ bestScore=score; best=g; }
+  }
+  if(!best) return null;
+  const lim=Math.max(2, Math.ceil(tipNorm(best.name).length*0.28));
+  return bestScore<=lim ? best : null;
+}
+function pickRingSlot(){
+  if(!S.gear["Ring 1"]) return "Ring 1";
+  if(!S.gear["Ring 2"]) return "Ring 2";
+  return "Ring 1";
+}
+function resolveImportSlot(slot, lib){
+  const raw=lib?lib.slot:(slot||null);
+  if(!raw) return null;
+  if(raw==="Ring 1" || raw==="Ring 2") return pickRingSlot();
+  return raw;
+}
+
 // "+8.80% Attack Speed", "[Gun] +24% Attack Speed", "29 vit", "+13 Power"
 function parseRollLine(line){
-  let s=line.trim(); if(!s) return null;
+  let s=String(line||"").trim(); if(!s) return null;
+  // OCR often splits "+ 15 Power" or reads "+l5"
+  s=s.replace(/^([+\-])\s+/,"$1");
   let tag=null;
   const tm=s.match(/^\[([A-Za-z ]+)\]\s*/);
   if(tm){
@@ -1454,15 +1616,29 @@ function parseRollLine(line){
     s=s.slice(tm[0].length);
   }
   // number may lead ("+29 Vitality") or trail ("Vitality 29")
-  let m=s.match(/^([+\-]?\d+(?:\.\d+)?)\s*(%?)\s*(.+)$/);
-  if(!m) m=(()=>{ const t=s.match(/^(.+?)\s+([+\-]?\d+(?:\.\d+)?)\s*(%?)$/);
-                  return t?[null,t[2],t[3],t[1]]:null; })();
+  let m=s.match(/^([+\-]?)([Il|O0-9SsBbZz.,]+)\s*(%?)\s*(.+)$/);
+  if(m){
+    const num=fixOcrNumberToken(m[2]);
+    if(/^\d+(?:\.\d+)?$/.test(num)) m=[null, (m[1]||"")+num, m[3], m[4]];
+    else m=null;
+  }
+  if(!m) m=(()=>{ const t=s.match(/^(.+?)\s+([+\-]?)([Il|O0-9SsBbZz.,]+)\s*(%?)$/);
+                  if(!t) return null;
+                  const num=fixOcrNumberToken(t[3]);
+                  if(!/^\d+(?:\.\d+)?$/.test(num)) return null;
+                  return [null, (t[2]||"")+num, t[4], t[1]]; })();
   if(!m) return null;
   const value=parseFloat(m[1]); if(isNaN(value)) return null;
   const hadPct=m[2]==="%";
   let name=m[3].toLowerCase().replace(/[^a-z% ]/g,"").replace(/\s+/g," ").trim()
               .replace(/\s*%$/,"");
   let stat=STAT_ALIASES[name];
+  if(!stat){
+    // Fuzzy-ish: strip trailing junk OCR attaches ("Power." / "Vitalityy")
+    const keys=Object.keys(STAT_ALIASES).sort((a,b)=>b.length-a.length);
+    const hit=keys.find(k=>name===k || name.startsWith(k+" ") || (k.length>=4 && tipLev(name,k)<=1));
+    if(hit) stat=STAT_ALIASES[hit];
+  }
   if(!stat) return null;
   // Prefer the % twin when the pasted line had a % and the flat key has no % label
   // (e.g. "-100% Link Count" → link_count_pct, same pattern as Dot Potency).
@@ -1472,6 +1648,363 @@ function parseRollLine(line){
   if(!isAttr && tag) roll.t=tag;
   return roll;
 }
+
+function parseTooltipText(text){
+  const raw=String(text||"").replace(/\r/g,"");
+  const lines=raw.split(/\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  const skip=/^(primary|secondary|requires:?|press shift|compare|forged|found in|foundation-pattern|volatile)/i;
+  let name=null, slot=null, rarity=null, lvl=null, section=null;
+  const rolls=[], fxLines=[];
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i], low=line.toLowerCase();
+    if(/^primary\b/i.test(line) || /^[^a-z]*primary[^a-z]*$/i.test(line)){ section="primary"; continue; }
+    if(/secondary/i.test(line) && line.length<=18){ section="secondary"; continue; }
+    if(/^requires/i.test(line) || /requires\s*:/i.test(line)){ section="req"; continue; }
+    if(/press\s*shift|to\s*compare/i.test(line)){ section="foot"; continue; }
+    if(section==="req" || section==="foot") continue;
+
+    const lm=line.match(/^level\s*[:.]?\s*(\d{1,3})\b/i)
+          || line.match(/\blevel\s*[:.]?\s*(\d{1,3})\b/i);
+    if(lm && +lm[1]>0 && +lm[1]<200){ lvl=+lm[1]; continue; }
+
+    const rarityHit=(()=>{
+      const low=tipNorm(line);
+      const rares=["legendary","epic","rare","uncommon","common"];
+      for(const r of rares){
+        if(low.startsWith(r+" ") || low===r) return {rarity:r, rest:low.slice(r.length).trim()};
+        // OCR often mangles the start ("{32andary Feet") — accept a token that is
+        // a long substring of the rarity word, then take the trailing slot word.
+        for(const tok of low.split(" ")){
+          if(tok.length>=4 && (r.includes(tok) || tipLev(tok,r)<=Math.ceil(r.length*0.34))){
+            const rest=low.slice(low.indexOf(tok)+tok.length).trim();
+            return {rarity:r, rest};
+          }
+        }
+      }
+      return null;
+    })();
+    if(rarityHit && rarityHit.rest){
+      rarity=rarityHit.rarity;
+      slot=normalizeSlotTip(rarityHit.rest.replace(/=+$/,"").trim()) || slot;
+      if(!name){
+        for(let j=i-1;j>=0;j--){
+          if(skip.test(lines[j]) || RARITY_RE.test(lines[j]) || /^level\b/i.test(lines[j])) continue;
+          if(parseRollLine(lines[j])) continue;
+          name=lines[j].replace(/^[^A-Za-z]+/,""); break;
+        }
+      }
+      continue;
+    }
+
+    if(section==="primary" || section==="secondary"){
+      const r=parseRollLine(line);
+      if(r){
+        // Trust section headers over attr/secondary classification — but never
+        // mark a non-attribute as primary just because it sat under Primary.
+        if(section==="primary") r.p=AKEYS.includes(r.s)?1:0;
+        else r.p=0;
+        rolls.push(r);
+        continue;
+      }
+      // Unique effect lines sit under Secondary and aren't parseable rolls.
+      if(section==="secondary" && !/^\d+%?\s*$/.test(line) && line.length>12){
+        fxLines.push(line);
+      }
+      continue;
+    }
+
+    // Before sections: try rolls anyway (OCR sometimes drops "Primary"/"Secondary")
+    if(!section){
+      const r=parseRollLine(line);
+      if(r){ rolls.push(r); continue; }
+      if(!name && !RARITY_RE.test(line) && !/^level\b/i.test(line) && !skip.test(line) && /[A-Za-z]/.test(line)){
+        // Prefer the longest early title-ish line as a candidate; first wins unless
+        // a later line looks more like a full item name (3+ words).
+        const cand=line.replace(/^[^A-Za-z]+/,"");
+        if(!name) name=cand;
+        else if(cand.split(/\s+/).length>=3 && name.split(/\s+/).length<3) name=cand;
+      }
+    }
+  }
+
+  // If OCR never saw Primary/Secondary, classify by attr vs secondary.
+  if(!lines.some(l=>/^primary$/i.test(l)||/^secondary$/i.test(l))){
+    rolls.forEach(r=>{ r.p=AKEYS.includes(r.s)?1:0; });
+  }
+
+  const lib=fuzzyLibMatch(name) || (()=>{
+    // Fall back: score every line as a possible name against the library.
+    let best=null, bestScore=Infinity, bestName=null;
+    for(const line of lines){
+      if(skip.test(line) || RARITY_RE.test(line) || /^level\b/i.test(line)) continue;
+      if(parseRollLine(line)) continue;
+      const g=fuzzyLibMatch(line);
+      if(!g) continue;
+      const sc=tipLev(g.name, line);
+      if(sc<bestScore){ bestScore=sc; best=g; bestName=line; }
+    }
+    if(best && !name) name=bestName;
+    return best;
+  })();
+
+  if(lib){
+    name=lib.name;
+    if(!slot) slot=lib.slot;
+  }
+
+  return {
+    name:name||"",
+    slot,
+    rarity,
+    lvl,
+    rolls,
+    fx:fxLines.join(" "),
+    lib,
+    raw,
+  };
+}
+
+function buildImportGear(parsed){
+  const slot=resolveImportSlot(parsed.slot, parsed.lib);
+  if(!slot) return null;
+  if(parsed.lib){
+    const m=materializeLibItem(parsed.lib);
+    const fixed=(parsed.lib.rolls||[]).map(r=>r.s);
+    const fixedSet=new Set(fixed);
+    // Random secondaries only — ignore OCR primaries when the library knows them.
+    const secs=parsed.rolls.filter(r=>!r.p && r.s && !fixedSet.has(r.s));
+    let pi=0;
+    for(let i=0;i<m.rolls.length;i++){
+      if(!m.rolls[i].s && pi<secs.length){
+        const s=secs[pi++];
+        m.rolls[i]={s:s.s,p:0,v:s.v}; if(s.t) m.rolls[i].t=s.t;
+      }
+    }
+    while(pi<secs.length){
+      const s=secs[pi++];
+      const o={s:s.s,p:0,v:s.v}; if(s.t) o.t=s.t;
+      m.rolls.push(o);
+    }
+    return {slot, gear:m, fromLib:true};
+  }
+  const rolls=parsed.rolls.map(r=>{
+    const o={s:r.s,p:r.p?1:0,v:+r.v||0}; if(r.t) o.t=r.t; return o;
+  });
+  return {slot, gear:{item:parsed.name||"Imported item",lv:parsed.lvl||0,rolls}, fromLib:false};
+}
+
+function rollLabel(r){
+  if(!r||!r.s) return "(empty pick)";
+  const nm=r.p?(ATTRS[r.s]?ATTRS[r.s].name:r.s):(SEC[r.s]||r.s);
+  const tag=r.t?`[${TAG_NAME[r.t]||r.t}] `:"";
+  return `${tag}${r.v>=0?"+":""}${r.v} ${nm}`;
+}
+
+let _shotPending=null;
+let _tesseractReady=null;
+
+function shotSetStatus(msg,isErr){
+  const el=document.getElementById("shotStatus");
+  if(!el) return;
+  if(!msg){ el.hidden=true; el.textContent=""; return; }
+  el.hidden=false;
+  el.className="shot-status"+(isErr?" err":"");
+  el.textContent=msg;
+}
+function shotClearPreview(){
+  _shotPending=null;
+  const box=document.getElementById("shotPreview");
+  if(box){ box.hidden=true; box.innerHTML=""; }
+}
+function renderShotPreview(parsed, thumbUrl){
+  const built=buildImportGear(parsed);
+  const box=document.getElementById("shotPreview");
+  if(!box) return;
+  if(!built){
+    box.hidden=false;
+    box.innerHTML=`<div class="shot-meta">Couldn't tell which slot this belongs to. Check the raw OCR below, or paste the lines into a slot.</div>
+      <details class="raw" open><summary>Raw OCR</summary><pre>${esc(parsed.raw||"")}</pre></details>
+      <div class="shot-actions"><button type="button" class="addbtn" id="shotCancel">Dismiss</button></div>`;
+    document.getElementById("shotCancel").onclick=()=>{ shotClearPreview(); shotSetStatus(""); };
+    return;
+  }
+  _shotPending={parsed, built, thumbUrl};
+  const g=built.gear;
+  const prim=(g.rolls||[]).filter(r=>r.p);
+  const secs=(g.rolls||[]).filter(r=>!r.p);
+  const src=built.fromLib
+    ? `Matched library item — fixed rolls from the database, secondaries from the screenshot.`
+    : `Not in the item database — using OCR for everything (double-check the numbers).`;
+  box.hidden=false;
+  box.innerHTML=`<div class="shot-prev">
+      ${thumbUrl?`<img src="${thumbUrl}" alt="Tooltip screenshot preview">`:""}
+      <div class="shot-meta">
+        <div><b>${esc(g.item||parsed.name||"Item")}</b><span class="slotpill">${esc(built.slot)}</span></div>
+        <div style="margin-top:4px;color:var(--faint);font-size:12px">${esc(src)}</div>
+        <ul class="shot-rolls">
+          ${prim.map(r=>`<li><span class="k">pri</span>${esc(rollLabel(r))}</li>`).join("")}
+          ${secs.map(r=>`<li class="${r.s?"":"fix"}"><span class="k">sec</span>${esc(rollLabel(r))}</li>`).join("")}
+        </ul>
+        <div class="shot-actions">
+          <button type="button" class="btn primary" id="shotEquip">Equip to ${esc(built.slot)}</button>
+          <button type="button" class="addbtn" id="shotCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <details class="raw"><summary>Raw OCR text</summary><pre>${esc(parsed.raw||"")}</pre></details>`;
+  document.getElementById("shotEquip").onclick=()=>applyShotImport();
+  document.getElementById("shotCancel").onclick=()=>{ shotClearPreview(); shotSetStatus(""); };
+}
+function applyShotImport(){
+  if(!_shotPending) return;
+  const {built}=_shotPending;
+  S.gear[built.slot]=built.gear;
+  _openSlot=built.slot;
+  shotClearPreview();
+  shotSetStatus("");
+  save();
+  const empty=(built.gear.rolls||[]).filter(r=>!r.p&&!r.s).length;
+  toast(empty
+    ? `Equipped ${built.gear.item} — fill ${empty} random secondary pick${empty>1?"s":""}`
+    : `Equipped ${built.gear.item} in ${built.slot}`);
+}
+
+async function loadTesseract(){
+  if(window.Tesseract) return window.Tesseract;
+  if(_tesseractReady) return _tesseractReady;
+  _tesseractReady=new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.async=true;
+    s.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error("Tesseract missing"));
+    s.onerror=()=>reject(new Error("Couldn't load OCR library (network?)"));
+    document.head.appendChild(s);
+  });
+  return _tesseractReady;
+}
+function loadImageFromBlob(blob){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(blob);
+    const img=new Image();
+    img.onload=()=>resolve({img,url});
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error("Couldn't read image")); };
+    img.src=url;
+  });
+}
+function prepTooltipImage(img){
+  // Nearest-neighbour upscale + hard threshold — pixel UI fonts OCR far better
+  // when each glyph is big and binary rather than anti-aliased on dark glass.
+  const scale=Math.max(3, Math.min(5, Math.ceil(900/Math.max(img.width,1))));
+  const c=document.createElement("canvas");
+  c.width=Math.max(1, Math.round(img.width*scale));
+  c.height=Math.max(1, Math.round(img.height*scale));
+  const ctx=c.getContext("2d",{willReadFrequently:true});
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(img,0,0,c.width,c.height);
+  const id=ctx.getImageData(0,0,c.width,c.height);
+  const d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    // Orange name / cyan labels / white values all clear this; dark panel does not.
+    const v=y>48?255:0;
+    d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
+  }
+  ctx.putImageData(id,0,0);
+  return c;
+}
+
+async function ocrTooltipImage(img){
+  const T=await loadTesseract();
+  const canvas=prepTooltipImage(img);
+  const result=await T.recognize(canvas,"eng",{
+    logger:m=>{
+      if(m.status==="recognizing text" && m.progress!=null){
+        shotSetStatus(`Reading tooltip… ${Math.round(m.progress*100)}%`);
+      }
+    },
+  });
+  return (result&&result.data&&result.data.text)||"";
+}
+
+async function handleShotBlob(blob){
+  if(!blob || !String(blob.type||"").startsWith("image/")){
+    shotSetStatus("That isn't an image", true); return;
+  }
+  shotClearPreview();
+  shotSetStatus("Loading OCR…");
+  try{
+    const {img,url}=await loadImageFromBlob(blob);
+    shotSetStatus("Reading tooltip…");
+    const text=await ocrTooltipImage(img);
+    const parsed=parseTooltipText(text);
+    if(!parsed.name && !parsed.rolls.length && !parsed.lib){
+      shotSetStatus("Couldn't read that tooltip — try a tighter crop", true);
+      renderShotPreview(parsed, url);
+      return;
+    }
+    shotSetStatus(parsed.lib
+      ? `Found ${parsed.lib.name}`
+      : (parsed.name?`Read “${parsed.name}”`:"Read rolls from screenshot"));
+    renderShotPreview(parsed, url);
+  }catch(e){
+    shotSetStatus(e.message||"OCR failed", true);
+  }
+}
+
+async function pasteShotFromClipboard(){
+  shotSetStatus("Reading clipboard…");
+  try{
+    if(navigator.clipboard && navigator.clipboard.read){
+      const items=await navigator.clipboard.read();
+      for(const item of items){
+        const type=item.types.find(t=>t.startsWith("image/"));
+        if(!type) continue;
+        const blob=await item.getType(type);
+        await handleShotBlob(blob);
+        return;
+      }
+    }
+    shotSetStatus("No image on the clipboard — copy a screenshot first (Win+Shift+S), then paste here", true);
+  }catch(e){
+    shotSetStatus("Clipboard blocked — focus this box and press Ctrl+V, or upload a file", true);
+  }
+}
+
+function wireShotImport(){
+  const zone=document.getElementById("shotZone");
+  const pasteBtn=document.getElementById("shotPaste");
+  const fileBtn=document.getElementById("shotFile");
+  const input=document.getElementById("shotInput");
+  if(!zone||!pasteBtn||!fileBtn||!input) return;
+
+  pasteBtn.onclick=()=>pasteShotFromClipboard();
+  fileBtn.onclick=()=>input.click();
+  input.onchange=()=>{
+    const f=input.files&&input.files[0];
+    input.value="";
+    if(f) handleShotBlob(f);
+  };
+
+  zone.addEventListener("dragover",e=>{ e.preventDefault(); zone.classList.add("drag"); });
+  zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));
+  zone.addEventListener("drop",e=>{
+    e.preventDefault(); zone.classList.remove("drag");
+    const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f) handleShotBlob(f);
+  });
+
+  document.addEventListener("paste",e=>{
+    const items=e.clipboardData&&e.clipboardData.items;
+    if(!items) return;
+    const img=[...items].find(i=>i.type&&i.type.startsWith("image/"));
+    if(!img) return;
+    // Don't steal pastes meant for text fields unless it's an image (text fields
+    // can't accept image clipboard data anyway).
+    e.preventDefault();
+    handleShotBlob(img.getAsFile());
+  });
+}
+
 function quickAdd(slot){
   const box=document.getElementById("qa_"+slot.replace(/\s/g,"_"));
   const text=(box?box.value:"")||"";
@@ -1495,7 +2028,12 @@ function renderGear(){
     open.add(name);
     if(d.querySelector("details.qa[open]")) qaOpen.add(name);
   });
+  if(_openSlot){ open.add(_openSlot); _openSlot=null; }
+  if(!open.size){
+    try{ const s=localStorage.getItem(LS_OPEN); if(s&&SLOTS.includes(s)) open.add(s); }catch(e){}
+  }
   const focus=_gearFocus; _gearFocus=null;
+  const mobileQa=typeof matchMedia==="function"&&matchMedia("(max-width:520px)").matches;
 
   document.getElementById("gear").innerHTML=SLOTS.map(sl=>{
     const g=S.gear[sl],rolls=g&&g.rolls?g.rolls:[],e=itemBudget(sl);
@@ -1508,22 +2046,28 @@ function renderGear(){
          Choose the ones on your piece below (or BiS choices), then set their values.</div>` : "";
     const rollHtml=rolls.map((r,i)=>{
       const head=needsPick&&i===fixedN?pickNote:"";
-      return head+rollRow(sl,i,r,needsPick&&i>=fixedN);
+      const locked=!!(libItem&&i<fixedN);
+      return head+rollRow(sl,i,r,needsPick&&i>=fixedN,locked);
     }).join("")+(needsPick&&rolls.length<=fixedN?pickNote:"");
-    return `<details class="slot"${open.has(sl)?" open":""}><summary>
+    const lib=libFor(sl);
+    const copySources=SLOTS.filter(s=>s!==sl&&S.gear[s]&&(S.gear[s].rolls||[]).some(r=>!r.p&&r.s));
+    return `<details class="slot"${open.has(sl)?" open":""} data-slot="${sl}"><summary>
       <span class="slotname">${sl}</span>
       <span class="itemname ${g?'':'empty'}">${g?esc(g.item):(SLOT_HINT[sl]?'empty — '+SLOT_HINT[sl]:'empty')}</span>
       ${e?`<span class="ilvl">i${e.level}</span>`:''}${eff}</summary>
       <div class="body">
         ${tooltipHtml(sl)}
-        ${(()=>{const lib=libFor(sl); return lib.length?`<select class="pick" style="margin-bottom:7px" aria-label="Load a documented item into ${sl}" onchange="equipFromLib('${sl}',this.value)">
-          <option value="">— load a documented ${sl} item (${lib.length}) —</option>
-          ${lib.map((x,i)=>`<option value="${i}">${x.rarity?x.rarity[0].toUpperCase()+x.rarity.slice(1)+" · ":""}${x.name}${x.lvl?` (iL${x.lvl})`:""}</option>`).join("")}
-        </select>`:""})()}
-        <details class="qa"${qaOpen.has(sl)?" open":""}><summary>Quick add — paste tooltip lines</summary>
+        ${lib.length?`<div class="libwrap">
+          <input class="libfilter" type="search" placeholder="Search ${sl} items (${lib.length})…"
+            aria-label="Search documented ${sl} items" autocomplete="off"
+            oninput="libSearch('${sl}',this.value)" onfocus="libSearch('${sl}',this.value)"
+            onkeydown="libSearchKey(event,'${sl}')">
+          <div class="libhits" id="libhits_${sl.replace(/\s/g,'_')}" hidden></div>
+        </div>`:""}
+        <details class="qa"${qaOpen.has(sl)||(mobileQa&&open.has(sl))?" open":""}><summary>Paste tooltip lines</summary>
           <textarea id="qa_${sl.replace(/\s/g,'_')}" class="qabox" rows="4"
-            placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed"></textarea>
-          <button class="addbtn" onclick="quickAdd('${sl}')">Add these rolls</button>
+            placeholder="+13 Power&#10;+28 Vitality&#10;+35% Critical Strike Damage&#10;[Gun] +24% Attack Speed&#10;&#10;Fastest way to enter a piece — paste from the game."></textarea>
+          <button class="addbtn" onclick="quickAdd('${sl}')">Add pasted rolls</button>
         </details>
         <div class="nameRow">
           <input class="itemname-edit" placeholder="Item name" aria-label="Item name for ${sl}" value="${g?esc(g.item):''}" oninput="setName('${sl}',this.value)">
@@ -1533,12 +2077,28 @@ function renderGear(){
         ${rollHtml}
         ${ACCESSORY.has(sl)?'':`<button class="addbtn" onclick="addRoll('${sl}',1)">+ primary (attribute)</button>`}
         <button class="addbtn" onclick="addRoll('${sl}',0)">+ secondary</button>
+        ${copySources.length?`<select class="pick" style="margin-top:6px" aria-label="Copy secondaries into ${sl}"
+          onchange="copySecsFrom('${sl}',this.value);this.value=''">
+          <option value="">— copy secondaries from slot —</option>
+          ${copySources.map(s=>`<option value="${s}">${s}${S.gear[s].item?": "+esc(S.gear[s].item):""}</option>`).join("")}
+        </select>`:""}
         ${g?`<button class="addbtn" style="background:#2a1620;color:#e08596;border-color:#3a2330" onclick="clearSlot('${sl}')">clear</button>`:''}
       </div></details>`;}).join("");
 
+  document.querySelectorAll("#gear details.slot").forEach(d=>{
+    d.addEventListener("toggle",()=>{
+      const name=d.getAttribute("data-slot")||d.querySelector(".slotname")?.textContent;
+      if(!name) return;
+      try{
+        if(d.open) localStorage.setItem(LS_OPEN,name);
+        else if(localStorage.getItem(LS_OPEN)===name) localStorage.removeItem(LS_OPEN);
+      }catch(e){}
+    });
+  });
+
   if(focus&&focus.sl!=="__cmp"){
     const slot=[...document.querySelectorAll("#gear details.slot")]
-      .find(d=>d.querySelector(".slotname")?.textContent===focus.sl);
+      .find(d=>(d.getAttribute("data-slot")||d.querySelector(".slotname")?.textContent)===focus.sl);
     const row=slot?.querySelectorAll(".rollrow")[focus.i];
     const el=focus.which==="v"?row?.querySelector("input[type=number]")
       :focus.which==="t"?row?.querySelector("select.tagsel")
@@ -1546,21 +2106,92 @@ function renderGear(){
     if(el){ el.focus(); if(el.select) try{ el.select(); }catch(e){} }
   }
 }
-function rollRow(sl,i,r,isPick){
+function libOptionLabel(g){
+  const rar=g.rarity?g.rarity[0].toUpperCase()+g.rarity.slice(1)+" · ":"";
+  const lv=g.lvl?` (iL${g.lvl})`:"";
+  const rnd=g.rolledSec?` · ${g.rolledSec} random sec`:"";
+  return `${rar}${g.name}${lv}${rnd}`;
+}
+function libHitsId(sl){ return "libhits_"+(sl==="__cmp"?"__cmp":sl.replace(/\s/g,"_")); }
+function libMatches(slot,q){
+  const lib=libFor(slot==="__cmp"?((S.compare&&S.compare.slot)||"Chest"):slot);
+  const qq=String(q||"").trim().toLowerCase();
+  return lib.map((g,i)=>({g,i,label:libOptionLabel(g)}))
+    .filter(x=>!qq||x.label.toLowerCase().includes(qq)||x.g.name.toLowerCase().includes(qq));
+}
+function renderLibHits(sl,q){
+  const box=document.getElementById(libHitsId(sl)); if(!box) return;
+  const hits=libMatches(sl,q);
+  _libActive=0;
+  if(!hits.length){
+    box.hidden=false;
+    box.innerHTML=`<div class="libempty">No matches</div>`;
+    return;
+  }
+  box.hidden=false;
+  box.innerHTML=hits.map((x,hi)=>`<button type="button" class="libhit${hi===0?" active":""}" data-i="${x.i}" data-hi="${hi}"
+      onmousedown="event.preventDefault()" onclick="libPick('${sl}',${x.i})">
+      ${esc(x.g.name)}<div class="meta">${esc(libOptionLabel(x.g))}</div>
+    </button>`).join("");
+}
+function libSearch(sl,q){ renderLibHits(sl,q); }
+function libSearchCmp(q){ renderLibHits("__cmp",q); }
+function libPick(sl,idx){
+  const box=document.getElementById(libHitsId(sl));
+  if(box){ box.hidden=true; box.innerHTML=""; }
+  if(sl==="__cmp") loadFromLib(String(idx));
+  else equipFromLib(sl,String(idx));
+}
+let _libActive=0;
+function libSearchKey(e,sl){
+  const box=document.getElementById(libHitsId(sl));
+  if(!box||box.hidden){
+    if(e.key==="ArrowDown"){ e.preventDefault(); renderLibHits(sl,e.target.value); return; }
+    return;
+  }
+  const hits=[...box.querySelectorAll(".libhit")];
+  if(e.key==="Escape"){ e.preventDefault(); box.hidden=true; return; }
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    e.preventDefault();
+    if(!hits.length) return;
+    hits[_libActive]?.classList.remove("active");
+    _libActive=(e.key==="ArrowDown"?_libActive+1:_libActive-1+hits.length)%hits.length;
+    hits[_libActive]?.classList.add("active");
+    hits[_libActive]?.scrollIntoView({block:"nearest"});
+    return;
+  }
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const hit=hits[_libActive]||hits[0];
+    if(hit) libPick(sl,hit.getAttribute("data-i"));
+  }
+}
+// Close result popups when clicking elsewhere
+document.addEventListener("click",e=>{
+  if(e.target.closest(".libwrap")) return;
+  document.querySelectorAll(".libhits").forEach(b=>{ b.hidden=true; });
+});
+function rollRow(sl,i,r,isPick,locked){
   const opts=r.p?AKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${ATTRS[k].name}</option>`).join("")
                 :`${isPick||!r.s?`<option value="">— pick a secondary —</option>`:""}${SECKEYS.map(k=>`<option value="${k}" ${k===r.s?'selected':''}>${SEC[k]}</option>`).join("")}`;
-  const kind=r.p?'primary':(isPick?'pick':'secondary');
-  return `<div class="rollrow"><span class="kind ${isPick?'pick':''}">${kind}</span>
-    <select onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
-    <input type="number" step="0.05" value="${r.v}" onchange="setRoll('${sl}',${i},'v',this.value)"${isPick&&!r.s?' placeholder="value"':''}>
-    ${r.p?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
+  const kind=locked?'fixed':(r.p?'primary':(isPick?'pick':'secondary'));
+  const dis=locked?" disabled":"";
+  return `<div class="rollrow${locked?" locked":""}"><span class="kind ${locked?'fixed':(isPick?'pick':'')}">${kind}</span>
+    <select${dis} onchange="setRoll('${sl}',${i},'s',this.value)">${opts}</select>
+    <input type="number" step="0.05" value="${r.v}"${dis}
+      onchange="setRoll('${sl}',${i},'v',this.value)"
+      ${isPick?`onkeydown="pickValueKey(event,'${sl}',${i})"`:""}
+      ${isPick&&!r.s?' placeholder="value"':''}>
+    ${r.p||locked?'':`<select class="tagsel" title="Limits this roll to certain abilities" onchange="setTag('${sl}',${i},this.value)">
       <option value="">all abilities</option>
       <optgroup label="Category (multiple abilities)">${["gun","elemental","throwable","explosion","physical","melee","sphere","weapon","heal","support"]
         .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
       <optgroup label="Single ability">${["gleamtwins","pyrosphere","chakram","drone"]
         .map(k=>`<option value="${k}" ${r.t===k?'selected':''}>[${TAG_NAME[k]}]</option>`).join("")}</optgroup>
     </select>`}
-    <button onclick="delRoll('${sl}',${i})">✕</button></div>`;
+    ${locked?"":`<button type="button" class="dup" title="Duplicate this roll" onclick="dupRoll('${sl}',${i})">⧉</button>
+    <button type="button" onclick="delRoll('${sl}',${i})" title="Remove roll">✕</button>`}
+    ${locked?`<span class="kind fixed" title="Fixed on this documented item">locked</span>`:""}</div>`;
 }
 function renderDisc(){
   // Wording required verbatim by the Soulbound Third-Party Extensions Policy.
@@ -1603,6 +2234,11 @@ const HIDDEN_INDEX=(()=>{
     put(id,  {id,display:disp,stat:HIDDEN_STATS[id]||null});
   });
   Object.entries(HIDDEN_STATS).forEach(([id,stat])=>put(id,{id,stat}));
+  // Documented gear is "known" — with or without a hidden effect — so the tooltip
+  // never says "hasn't been recorded" for a library item.
+  GEAR_LIB.forEach(g=>{
+    put(g.name, g.fx ? {display:g.name, fx:g.fx} : {display:g.name});
+  });
   PROCS.forEach(p=>{ put(p.name,{proc:p,display:p.name}); put(p.pat,{proc:p}); });
   return ix;
 })();
@@ -1632,7 +2268,7 @@ function tooltipHtml(sl){
   const kn=hiddenFor(g.item);
 
   let hidden;
-  if(kn&&(kn.stat||kn.proc)){
+  if(kn&&(kn.stat||kn.proc||kn.fx)){
     const bits=[];
     if(kn.stat){
       const m=/^([+\-]?[\d.]+%?)\s+(.*)$/.exec(kn.stat);
@@ -1642,8 +2278,10 @@ function tooltipHtml(sl){
     }
     if(kn.proc) bits.push(`<div class="ttrow"><span class="ttv">${esc(kn.proc.trigger)}</span>
       <span class="ttl">${esc(kn.proc.effect)}${kn.proc.scope?` [${esc(fxLabel(kn.proc.scope))}]`:""} · ${kn.proc.chance}%</span></div>`);
+    else if(kn.fx) bits.push(`<div class="ttrow"><span class="ttv">${esc(kn.fx.trigger)}</span>
+      <span class="ttl">${esc(kn.fx.effect)}${kn.fx.scope?` [${esc(fxLabel(kn.fx.scope))}]`:""}</span></div>`);
     hidden=`<div class="tthead">Not on the in-game tooltip</div>${bits.join("")}
-      ${kn.proc?`<div class="ttnote">Only a Legendary copy carries this. A lower-rarity one of the same item has nothing.</div>`:""}`;
+      ${kn.proc||kn.fx?`<div class="ttnote">Only a Legendary copy carries this. A lower-rarity one of the same item has nothing.</div>`:""}`;
   }else if(kn){
     hidden=`<div class="tthead">Not on the in-game tooltip</div>
       <div class="ttnote">Nothing hidden on this one — it's been checked.</div>`;
@@ -1725,6 +2363,7 @@ function equipFromLib(slot,idx){
   if(idx==="") return;
   const g=libFor(slot)[+idx]; if(!g) return;
   S.gear[slot]=materializeLibItem(g);
+  _openSlot=slot;
   save(); toast(`Equipped ${g.name}`);
 }
 function setCmpName(v){ S.compare.item=v; persist(); }
@@ -1736,25 +2375,82 @@ function setLoadout(i,v){ S.loadout[i]=v; save(); }
 function setName(sl,v){ if(!S.gear[sl])S.gear[sl]={item:v,lv:0,rolls:[]}; S.gear[sl].item=v; persist(); }
 function setLv(sl,v){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]}; S.gear[sl].lv=+v||0; save(); }
 let _gearFocus=null;
+let _openSlot=null;
 function setRoll(sl,i,f,v){
-  const r=gearOf(sl).rolls[i]; r[f]=f==='v'?(+v||0):v;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  if(rollLocked(sl,i)&&(f==="s"||f==="v")) return;
+  const r=g.rolls[i]; r[f]=f==='v'?(+v||0):v;
   // After picking a stat, jump to the value field; keep the slot open via renderGear.
   if(sl!=="__cmp") _gearFocus={sl,i,which:f==="s"?"v":f};
   save();
 }
 function setTag(sl,i,tag){
+  if(rollLocked(sl,i)) return;
   const r=gearOf(sl).rolls[i]; if(tag)r.t=tag; else delete r.t;
   if(sl!=="__cmp") _gearFocus={sl,i,which:"t"};
   save();
 }
-function delRoll(sl,i){ gearOf(sl).rolls.splice(i,1); if(sl!=="__cmp") _gearFocus={sl,i:Math.max(0,i-1),which:"s"}; save(); }
+function rollLocked(sl,i){
+  const item=sl==="__cmp"?(S.compare&&S.compare.item):(S.gear[sl]&&S.gear[sl].item);
+  const lib=libByName(item);
+  return !!(lib&&i<(lib.rolls||[]).length);
+}
+function delRoll(sl,i){
+  if(rollLocked(sl,i)){ toast("That line is fixed on this item"); return; }
+  gearOf(sl).rolls.splice(i,1);
+  if(sl!=="__cmp") _gearFocus={sl,i:Math.max(0,i-1),which:"s"};
+  save();
+}
+function dupRoll(sl,i){
+  if(rollLocked(sl,i)) return;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  const copy=JSON.parse(JSON.stringify(g.rolls[i]));
+  g.rolls.splice(i+1,0,copy);
+  if(sl!=="__cmp"){ _openSlot=sl==="__cmp"?null:sl; _gearFocus={sl,i:i+1,which:"s"}; }
+  save();
+}
+function copySecsFrom(sl,from){
+  if(!from||from===sl) return;
+  const src=S.gear[from]; if(!src) return;
+  const secs=(src.rolls||[]).filter(r=>!r.p&&r.s).map(r=>{
+    const o={s:r.s,p:0,v:+r.v||0}; if(r.t) o.t=r.t; return o;
+  });
+  if(!secs.length){ toast("No secondaries to copy"); return; }
+  if(!S.gear[sl]) S.gear[sl]={item:"New item",lv:0,rolls:[]};
+  const g=S.gear[sl];
+  const lib=libByName(g.item);
+  const fixedN=lib?(lib.rolls||[]).length:0;
+  const kept=fixedN?(g.rolls||[]).slice(0,fixedN):(g.rolls||[]).filter(r=>r.p);
+  g.rolls=kept.concat(secs);
+  _openSlot=sl;
+  save(); toast(`Copied ${secs.length} secondaries from ${from}`);
+}
+function pickValueKey(e,sl,i){
+  if(e.key!=="Enter"&&!(e.key==="Tab"&&!e.shiftKey)) return;
+  const g=gearOf(sl); if(!g||!g.rolls[i]) return;
+  g.rolls[i].v=+e.target.value||0;
+  const item=sl==="__cmp"?(S.compare&&S.compare.item):g.item;
+  const lib=libByName(item);
+  const fixedN=lib?(lib.rolls||[]).length:0;
+  let next=-1;
+  for(let j=i+1;j<(g.rolls||[]).length;j++){
+    if(!g.rolls[j].p&&(!lib||j>=fixedN)){ next=j; break; }
+  }
+  if(e.key==="Enter"||next>=0){
+    e.preventDefault();
+    persist();
+    if(sl==="__cmp"){ save(); return; }
+    _gearFocus={sl,i:next>=0?next:i,which:next>=0?"s":"v"};
+    save();
+  }
+}
 function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]};
   S.gear[sl].rolls.push(p?{s:ARMOUR.has(sl)?"vitality":"ferocity",p:1,v:0}:{s:"critical_strike_damage",p:0,v:0});
   if(sl!=="__cmp") _gearFocus={sl,i:S.gear[sl].rolls.length-1,which:"s"};
   save(); }
 function clearSlot(sl){ S.gear[sl]=null; save(); }
 
-document.getElementById("shareBtn").onclick=shareLink;
+document.getElementById("shareBtn").onclick=()=>shareLink();
 
 const pubPanel=document.getElementById("pubPanel");
 document.getElementById("pubBtn").onclick=()=>{
@@ -1824,6 +2520,7 @@ document.getElementById("importFile").onchange=e=>{const f=e.target.files[0]; if
     if(d&&d.gear){ S=normalise(d); save(); } else alert("Not a build file");}catch(err){alert("Invalid JSON");}};
   rd.readAsText(f);};
 function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+wireShotImport();
 render();
 </script>
 </body>
