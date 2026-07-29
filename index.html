@@ -913,10 +913,13 @@ function fromHash(){
 // chat auto-moderators. If the API is unreachable, fall back to the long
 // self-contained link — sharing must never break just because a server is down.
 async function shareLink(force){
-  const miss=emptySecSlots();
-  if(miss.length && !force){
-    toast(`Unfilled secondary picks on ${miss.join(", ")}`, ()=>shareLink(true), "Share anyway");
-    return;
+  // onclick handlers pass the Event as arg 1 — only an explicit true forces through.
+  if(force!==true){
+    const miss=emptySecSlots();
+    if(miss.length){
+      toast(`Unfilled secondary picks on ${miss.join(", ")}`, ()=>shareLink(true), "Share anyway");
+      return;
+    }
   }
   const code=await encodeBuild();
   const longUrl=location.origin+location.pathname+"#b="+code;
@@ -1958,7 +1961,7 @@ function addRoll(sl,p){ if(!S.gear[sl])S.gear[sl]={item:"New item",lv:0,rolls:[]
   save(); }
 function clearSlot(sl){ S.gear[sl]=null; save(); }
 
-document.getElementById("shareBtn").onclick=shareLink;
+document.getElementById("shareBtn").onclick=()=>shareLink();
 
 const pubPanel=document.getElementById("pubPanel");
 document.getElementById("pubBtn").onclick=()=>{
