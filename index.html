@@ -583,7 +583,7 @@ function tagScope(tag){ return ABILITIES.filter(a=>tagMatches(tag,a)); }
 const GEAR_LIB = [
   {"slot":"Arms","name":"Encoded Staff","rarity":"uncommon","lvl":22,"rolls":[{"s":"will","p":1,"v":7},{"s":"precision","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"shielding_power","p":0,"v":21.0}]},
   {"slot":"Arms","name":"Voltlite Staff","rarity":"","lvl":22,"fx":{"trigger":"on enemy kill","scope":"fire","effect":"Power buff to your fire abilities"},"rolls":[{"s":"will","p":1,"v":7},{"s":"ferocity","p":1,"v":8},{"s":"focus","p":1,"v":7},{"s":"dot_potency","p":0,"v":28.0},{"s":"cooldown_reduction","p":0,"v":3.5}]},
-  {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9},{"s":"critical_strike_damage","p":0,"v":30.0},{"s":"attack_speed","p":0,"v":7.2}]},
+  {"slot":"Arms","name":"Tritanium Hammer","rarity":"legendary","lvl":29,"rolledSec":2,"fx":{"trigger":"on heavy hit","scope":"","effect":"Large Cooldown Reduction buff for a short duration"},"rolls":[{"s":"power","p":1,"v":10},{"s":"precision","p":1,"v":10},{"s":"focus","p":1,"v":9}]},
   {"slot":"Arms","name":"Viridium Greatsword","rarity":"legendary","lvl":36,"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"ferocity","p":1,"v":12},{"s":"health","p":0,"v":80.0},{"s":"shielding_power","p":0,"v":28.0}]},
   {"slot":"Arms","name":"Viridium Yoku Hammer","rarity":"legendary","lvl":36,"rolledSec":2,"fx":{"trigger":"on melee crit","scope":"melee","effect":"+100% threat generation briefly"},"rolls":[{"s":"power","p":1,"v":12},{"s":"will","p":1,"v":12},{"s":"focus","p":1,"v":12}]},
   /* Fixed: primaries + unique Link Count lines. rolledSec = random secondaries
@@ -681,7 +681,7 @@ const PROCS=[
  {pat:"t3 staff Lunar", trigger:"on enemy kill", effect:"Power buff to fire abilities", scope:"fire", chance:100, buffs:true, id:"legendary_kill_fire_power_buff_ability"},
  {pat:"t3 sword Virelda", trigger:"on enemy kill", effect:"Power buff to cold abilities", scope:"cold", chance:100, buffs:true, id:"legendary_kill_cold_power_buff_ability"},
  {pat:"t4 heavy Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"bomb_explosion", chance:100, id:"legendary_bomb_5hit_shockwave", name:"Dark Yoku Hammer"},
- {pat:"t4 heavy Neotilus", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability"},
+ {pat:"t4 heavy Neotilus", trigger:"on heavy hit", effect:"Cooldown reduction buff", scope:"", chance:100, buffs:true, id:"legendary_heavy_hit_cdr_buff_ability", name:"Tritanium Hammer"},
  {pat:"t4 staff Lunar", trigger:"on crit", effect:"Power buff to void abilities", scope:"void", chance:100, buffs:true, id:"legendary_void_crit_power_buff_ability"},
  {pat:"t5 greatsword Neotilus", trigger:"on enemy hit", effect:"Chill DEBUFF on the enemy", scope:"melee", chance:100, id:"legendary_melee_chill_debuff"},
  {pat:"t5 staff Lunar", trigger:"on impact end", effect:"Shockwave after 5 hits", scope:"pyrosphere", chance:100, id:"legendary_pyrosphere_5hit_shockwave"},
